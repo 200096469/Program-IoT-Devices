@@ -116,7 +116,7 @@ Wokwi https://wokwi.com/projects/471516524377458689
 
 ## Task 5 - Spot-the-Bug Worksheet (Extension)
 
-**Format:** Solo, self-paced. For each round, read the snippet and write down what's wrong **before** revealing the answer.
+
 
 **Round 1:**
 ```cpp
