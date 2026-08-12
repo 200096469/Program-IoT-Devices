@@ -259,7 +259,7 @@ void loop() {
 }
 ```
 https://wokwi.com/projects/471953115893900289
-https://wokwi.com/projects/471956839488893953 (with buzze and oled)
+https://wokwi.com/projects/471956839488893953 (with buzzer and oled)
 
 ---
 
@@ -269,7 +269,7 @@ https://wokwi.com/projects/471956839488893953 (with buzze and oled)
 
 **Round 1:**
 ```cpp
-void beep(onTime) {
+void beep(onTime) { // BUG: It is missing "int" type for the parameter
   digitalWrite(buzzerPin, HIGH);
   delay(onTime);
   digitalWrite(buzzerPin, LOW);
@@ -287,14 +287,14 @@ void showColor(int pin, int onTime) {
 }
 
 void loop() {
-  showColor(redPin);
+  showColor(redPin);  // BUG: missing second argument "onTime"
 }
 ```
 <details><summary>Answer</summary><code>showColor</code> expects two arguments (<code>pin</code> and <code>onTime</code>), but only one was passed in — this won't compile.</details>
 
 **Round 3:**
 ```cpp
-void controlLED(bool turnOn) {
+void controlLED(bool turnOn) {  // BUG It is "void", must be "bool" since the function returns a value
   digitalWrite(ledPin, turnOn);
   return turnOn;
 }
@@ -303,7 +303,7 @@ void controlLED(bool turnOn) {
 
 **Round 4:**
 ```cpp
-bool controlLED(bool turnOn) {
+bool controlLED(bool turnOn) {  // BUG: It is missing "return turnOn;" — the function promises a bool but never returns one
   digitalWrite(ledPin, turnOn);
 }
 
@@ -323,27 +323,27 @@ void lightLED(int ledPin, int delayTime) {
 }
 
 void loop() {
-  lightLED(200, 4);
+  lightLED(200, 4); // BUG: arguments swapped — should be lightLED(4, 200)
 }
 ```
 <details><summary>Answer</summary>The arguments are swapped — <code>lightLED(int ledPin, int delayTime)</code> expects the pin number first and the delay second, but this call passes <code>200</code> as the pin (not a real GPIO) and <code>4</code> as the delay (4 ms, barely visible). It should be <code>lightLED(4, 200)</code>.</details>
 
 **Round 6:**
 ```cpp
-int getNoteDuration() {
+int getNoteDuration() { // NOTE: fixed value, no calculation — a const/variable would make more sense than a function here
   return 300;
 }
 
 void loop() {
-  getNoteDuration();
-  playNote(440, 500);
+  getNoteDuration();   // BUG: return value is never used/stored — should be "int duration = getNoteDuration();"
+  playNote(440, 500);  // should use the duration returned above, e.g. playNote(440, duration);
 }
 ```
 <details><summary>Answer</summary><code>getNoteDuration()</code> is called but its returned value is never stored or used — the code then hardcodes <code>500</code> into <code>playNote()</code> instead. Calling a value-returning function without using what it returns defeats the point of it; it should be <code>playNote(440, getNoteDuration());</code> or store the result first: <code>int duration = getNoteDuration(); playNote(440, duration);</code>.</details>
 
 **Round 7:**
 ```cpp
-bool checkAnswer(string answer) {
+bool checkAnswer(string answer) { // BUG: "string" (lowercase) doesn't exist here — should be "String". It gives an error
   return answer == "red";
 }
 ```
@@ -358,12 +358,13 @@ void setRGBColour(int red, int green, int blue) {
 }
 
 void loop() {
-  setRGBColour(255, 0);
+  setRGBColour(255, 0); // BUG: missing third argument — needs a value for "blue", e.g. setRGBColour(255, 0, 0);
 }
 ```
 <details><summary>Answer</summary><code>setRGBColour</code> expects three arguments (<code>red</code>, <code>green</code>, and <code>blue</code>), but only two were passed in — this won't compile. It needs a third value, e.g. <code>setRGBColour(255, 0, 0);</code>.</details>
 
-**Self-check:** How many did you spot correctly before looking?
+**Self-check:** How many did you spot correctly before looking?  
+**I only answered 5 questions correctly.**
 
 ---
 
