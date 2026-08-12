@@ -23,6 +23,41 @@ Wokwi https://wokwi.com/projects/471515514429761537
 - [ ] The SOS pattern is clearly recognisable (short-short-short, long-long-long, short-short-short)
 - [ ] There is a 2-second pause between each full SOS sequence
 
+**Task 1:**
+```cpp
+/*
+==== Task 1 - Buzzer SOS Using a Function ====
+           Author: Roberto Palozzo
+==============================================
+*/
+
+int buzzerPin = 8;
+
+// Function that generates 3 consecutive beeps
+// "onTime" is the duration (in ms) of each single beep
+void beep(int onTime) {
+  for (int i=0; i<3; i++) {       // repeat 3 times
+    tone(buzzerPin, 400);         // turns on the buzzer at 400 Hz
+    delay(onTime);                // keeps the tone on for "onTime" ms
+    noTone(buzzerPin);            // turns off the tone
+    delay(200);                   // 200 ms pause between beeps
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buzzerPin, OUTPUT);
+}
+
+void loop() {
+  beep(200);     // 3 short beep -> letter "S" in Morse code (S O S)
+  beep(600);     // 3 long beep -> letter "O" in Morse code
+  beep(200);     // 3 short beep -> letter "S" in Morse code
+  delay(2000);   // 2 sec pause before repeating the SOS signal
+}
+```
+https://wokwi.com/projects/471932128763166721
+
 ---
 
 ## Task 2 - RGB Colour Cycle Using a Function
@@ -55,6 +90,52 @@ Wokwi https://wokwi.com/projects/471515878453487617
 - [ ] Only one colour is on at a time during the colour cycle
 - [ ] (Challenge) `showWhite()` turns all three colours on at once
 
+**Task 2:**
+```cpp
+/*
+==== Task 2 - RGB Colour Cycle Using a Function ====
+              Author: Roberto Palozzo
+====================================================
+*/
+
+int redPin = 14;    // Pin connected to the red LED
+int greenPin = 18;  // Pin connected to the green LED
+int bluePin = 17;   // Pin connected to the blue LED
+
+// Turns on a single LED for "onTime" ms, then turns it off
+void showColor(int pin, int onTime) {
+  digitalWrite(pin, HIGH);  // turn LED on
+  delay(onTime);             // keep it on
+  digitalWrite(pin, LOW);   // turn LED off
+}
+
+// Turns on all three LEDs together to make white light
+void showWhite(int onTime) {
+  digitalWrite(redPin, HIGH);
+  digitalWrite(greenPin, HIGH);
+  digitalWrite(bluePin, HIGH);
+  delay(onTime);              // keep white light on
+  digitalWrite(redPin, LOW);
+  digitalWrite(greenPin, LOW);
+  digitalWrite(bluePin, LOW);
+}
+
+void setup() {
+  Serial.begin(115200);        // start serial communication (for debugging)
+  pinMode(redPin, OUTPUT);     // set red pin as output
+  pinMode(greenPin, OUTPUT);   // set green pin as output
+  pinMode(bluePin, OUTPUT);    // set blue pin as output
+}
+
+void loop() {
+  showColor(redPin, 500);    // show red for 500 ms
+  showColor(greenPin, 500);  // show green for 500 ms
+  showColor(bluePin, 500);   // show blue for 500 ms
+  showWhite(500);            // show white for 500 ms
+}
+```
+https://wokwi.com/projects/471944181333836801
+
 ---
 
 ## Task 3 - Function With a Return Value
@@ -78,6 +159,42 @@ Wokwi https://wokwi.com/projects/471516108090616833
 - [ ] `controlLED()` returns a `bool`, not `void`
 - [ ] The Serial Monitor prints `1` when the LED is on and `0` when it is off
 - [ ] The same function handles both turning the LED on and off
+
+**Task 3:**
+```cpp
+/*
+==== Task 3 - Function With a Return Value ====
+            Author: Roberto Palozzo
+===============================================
+*/
+
+const int ledPin = 13;            // Pin connected to the LED
+
+// This function turns the LED on or off
+// and returns its new state
+bool controlLED(bool turnOn) {
+  digitalWrite(ledPin, turnOn);   // set LED to the given state
+  return turnOn;                  // return the state that was set
+}
+
+void setup() {
+  Serial.begin(115200);    // start serial communication (for debugging)
+  pinMode(ledPin, OUTPUT); // set LED pin as output
+}
+
+void loop() {  
+  bool ledState = controlLED(true);      // Turn the LED ON
+  Serial.print("LED state: ");
+  Serial.println(ledState);              // Prints 1 (ON)
+  delay(1000);                           // wait 1 second
+
+  ledState = controlLED(false);          // Turn the LED OFF
+  Serial.print("LED state: ");
+  Serial.println(ledState);              // Prints 0 (OFF)
+  delay(1000);                           // wait 1 second
+}
+```
+https://wokwi.com/projects/471947692141498369
 
 ---
 
@@ -111,6 +228,38 @@ Wokwi https://wokwi.com/projects/471516524377458689
 - [ ] `lightLED()` is reused for every LED — no repeated `digitalWrite`/`delay` blocks in `loop()`
 - [ ] The sequence moves from the first LED to the last, then repeats continuously
 - [ ] (Challenge) A buzzer sound or OLED/LCD message marks the end of each full sequence
+
+**Task 4:**
+```cpp
+/*
+==== Task 4 - LED Chase Sequence Using a Function ====
+              Author: Roberto Palozzo
+======================================================
+*/
+
+// Turns on a single LED for "delayTime" ms, then turns it off
+void lightLED(int ledPin, int delayTime) {
+  digitalWrite(ledPin, HIGH);   // turn LED on
+  delay(delayTime);             // keep it on
+  digitalWrite(ledPin, LOW);    // turn LED off
+}
+
+void setup() {
+  pinMode(4, OUTPUT);           // set pin 4 as output
+  pinMode(5, OUTPUT);           // set pin 5 as output
+  pinMode(6, OUTPUT);           // set pin 6 as output
+  pinMode(7, OUTPUT);           // set pin 7 as output
+}
+
+void loop() {
+  lightLED(4, 200);             // fast blink — 200 ms on/off
+  lightLED(5, 200);             // chase to next LED
+  lightLED(6, 200);             // chase to next LED
+  lightLED(7, 200);             // chase to last LED, then loop repeats
+}
+```
+https://wokwi.com/projects/471953115893900289
+https://wokwi.com/projects/471956839488893953 (with buzze and oled)
 
 ---
 
