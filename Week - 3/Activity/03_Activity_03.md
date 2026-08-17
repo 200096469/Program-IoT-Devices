@@ -41,6 +41,44 @@ Configure the button with `INPUT_PULLUP`. Read it every loop with `digitalRead()
 - [ ] The LED is on only while the button is held down
 - [ ] Pressed reads `LOW` and this is reflected correctly in the condition
 
+**Task 1:**
+```cpp
+/*
+=== Task 1 - Pull-Up Button LED Using if ===
+          Author: Roberto Palozzo
+============================================
+*/
+
+int pushButton = 4;
+int ledPin = 2;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32-S3!");
+  pinMode(pushButton, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  int buttonState = digitalRead(pushButton); // Read the current button state.
+
+  // Check whether the button is pressed.
+  if (buttonState == LOW) {
+    digitalWrite(ledPin, HIGH);
+    Serial.println("Button pressed - LED On");
+  }
+  if  (buttonState == HIGH){    
+    digitalWrite(ledPin, LOW);
+    Serial.println("Button released - LED Off");
+  }
+  delay(100);
+}
+```
+https://wokwi.com/projects/472572266370854913
+
 ---
 
 ## Task 2 - Pull-Down Comparison Using `if / else`
@@ -83,6 +121,44 @@ Configure the button with `INPUT_PULLDOWN`. This time use one `if / else` statem
 - [ ] Pressed reads `HIGH` (opposite of Task 1) and the condition matches
 - [ ] A single `if / else` replaces the two separate `if` statements from Task 1
 
+**Task 2:**
+```cpp
+/*
+=== Task 2 - Pull-Down Comparison Using if / else ===
+              Author: Roberto Palozzo
+=====================================================
+*/
+
+int pushButton = 4;
+int ledPin = 2;
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32-S3!");
+  pinMode(pushButton, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  int buttonState = digitalRead(pushButton); // Read the current button state.
+
+  // Check whether the button is pressed.
+  if (buttonState == LOW) {
+    digitalWrite(ledPin, HIGH);
+    Serial.println("Button pressed - LED On");
+  }
+  else {    
+    digitalWrite(ledPin, LOW);
+    Serial.println("Button released - LED Off");
+  }
+  delay(100);
+}
+```
+https://wokwi.com/projects/472572028022153217
+
 ---
 
 ## Task 3 - PIR Motion Alert Using Boolean Logic
@@ -118,6 +194,69 @@ Declare `bool afterHours` near the top of your program and set it to `true` or `
 - [ ] The buzzer only sounds when motion **and** `afterHours` are both true
 - [ ] Changing `afterHours` to `false` in code stops the buzzer even with motion present
 - [ ] (Challenge) `!alarmEnabled` correctly overrides everything else when the system is disabled
+
+**Task 3:**
+```cpp
+/*
+=== Task 3 - PIR Motion Alert Using Boolean Logic ===
+              Author: Roberto Palozzo
+=====================================================
+*/
+
+const int PIR_PIN = 4;              // PIR motion sensor output pin
+const int BUZZER_PIN = 15;          // passive buzzer pin
+
+bool afterHours = true;             // manually simulates whether it's after working hours
+
+// Plays a rising/falling siren tone by sweeping the buzzer frequency
+// up and down between 600Hz and 1600Hz, one step per call
+void startSiren() {
+  static int frequency = 600;       // keeps its value between calls (only initialised once)
+  static int direction = 20;        // how much to change the frequency each call, and which way
+
+  tone(BUZZER_PIN, frequency);      // play the current frequency
+  frequency += direction;           // step the frequency up or down
+
+  if (frequency >= 1600) {
+    direction = -20;                // hit the top, start sweeping down
+  }
+  else if (frequency <= 600) {
+    direction = 20;                 // hit the bottom, start sweeping up
+  }
+}
+
+// Stops the siren sound
+void stopSiren() {
+  noTone(BUZZER_PIN);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(PIR_PIN, INPUT);          // PIR sensor as input
+  pinMode(BUZZER_PIN, OUTPUT);      // buzzer as output
+
+  stopSiren();                      // make sure the buzzer starts silent
+}
+
+void loop() {
+  int motionDetected = digitalRead(PIR_PIN);   // read the sensor fresh every loop
+
+  // Sound the alarm only when BOTH conditions are true:
+  // motion is detected AND it's currently after hours
+  if (afterHours == true && motionDetected == HIGH) {
+    startSiren();
+    Serial.println("Detected movements. ALARM!");
+  }
+  else {
+    stopSiren();
+    Serial.println("Undetected movements. All Good! ");
+  }
+
+  delay(100);                       // small pause between readings
+}
+```
+https://wokwi.com/projects/472573140859288577
 
 ---
 
@@ -163,7 +302,48 @@ Read the potentiometer with `analogRead()` (0–4095) and convert it to a 0–25
 **Check yourself:**
 - [ ] The dimmable LED's brightness changes smoothly as the knob turns
 - [ ] `map()` correctly converts the 0–4095 reading into the 0–255 PWM range
-- [ ] The warning LED turns on only when brightness is below the threshold
+- [ ] The warning LED turns on only when brightness is below the threshold  
+
+**Task 4:**
+```cpp
+/*
+=== Task 4 - Potentiometer Dimmer With a Low-Brightness Warning ===
+                    Author: Roberto Palozzo
+===================================================================
+*/
+
+const int potPin = 1;                               // potentiometer wiper connected to GPIO 1
+const int ledPin = 9;                               // dimmable LED connected to GPIO 9
+const int warningPin = 10;                          // warning LED connected to GPIO 10
+
+void setup() {
+  pinMode(ledPin, OUTPUT);                          // set the dimmable LED pin as an output
+  pinMode(warningPin, OUTPUT);                      // set the warning LED pin as an output
+  Serial.begin(115200);
+}
+
+void loop() {
+  int potValue = analogRead(potPin);                // read the potentiometer (0 to 4095)
+
+  int brightness = map(potValue, 0, 4095, 0, 255);  // convert the reading to PWM range (0 to 255)
+
+  analogWrite(ledPin, brightness);                  // set the dimmable LED's brightness
+
+  // turn on the warning LED whenever the brightness is too low to be useful
+  if (brightness < 25) {
+    digitalWrite(warningPin, HIGH);
+  }
+  else {
+    digitalWrite(warningPin, LOW);
+  }
+
+  Serial.println(potValue);                         // raw potentiometer reading
+  Serial.println(brightness);                       // mapped PWM value
+
+  delay(100);                                       // small pause: keeps the dimmer smooth while the Serial Monitor stays readable
+}
+```
+https://wokwi.com/projects/472579212917670913
 
 ---
 
@@ -201,6 +381,63 @@ Read the temperature each loop with the DHT library (read no more than once ever
 - [ ] A failed sensor read is detected with `isnan()` before the temperature is classified
 - [ ] Exactly one of the three labels prints per reading, never more than one
 - [ ] Conditions are ordered so a later, broader condition can't accidentally catch a case meant for an earlier one
+
+
+/*
+=== Task 5 - Comfort Monitor Using if / else if / else ===
+                  Author: Roberto Palozzo
+==========================================================
+*/
+
+#include <DHT.h>                                  // library for reading DHT-series sensors
+#define DHTPIN 2                                  // pin connected to the DHT22 data pin
+#define DHTTYPE DHT22                             // sensor model
+DHT dht(DHTPIN, DHTTYPE);                         // create the DHT sensor object
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("DHT11 Temperature and Humidity Sensor");
+
+  dht.begin();                                    // start the DHT sensor
+}
+
+void loop() {
+  float humidity = dht.readHumidity();            // read humidity (%)
+  float temperature = dht.readTemperature();      // read temperature in Celsius
+  
+  // isnan() = "is Not a Number" - the DHT library returns NaN instead of
+  // a real value when a read fails, so check before using any of the values
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Failed to read from DHT22 sensor!");
+    delay(2000);
+    return;                                       // skip the rest of loop() and try again next time
+  }
+
+  // classify the temperature into one of three bands
+  // (checked from narrowest/lowest to widest, so no band accidentally catches another's case)
+  if (temperature < 15) {
+    Serial.println("Cold");
+  }
+  else if (temperature >= 15 && temperature <= 29) {
+    Serial.println("Confortable");
+  }
+  else {
+    Serial.println("Hot");                        // covers 30°C and above (plus the 29-30 gap)
+  }
+
+  // print the raw readings
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %\t");
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C\t");
+
+  delay(2000);                                    // DHT22 updates slowly, so wait 2 seconds before the next read
+}
+```
+https://wokwi.com/projects/472582319708664833
 
 ---
 
@@ -240,25 +477,114 @@ Wokwi link: https://wokwi.com/projects/471661119539001345
 **Check yourself:**
 - [ ] One press toggles the armed state once — holding the button doesn't rapidly toggle it
 - [ ] The PIR sensor is only checked when `systemArmed` is `true` (nested inside that condition)
-- [ ] The buzzer stops immediately when the system is disarmed, even mid-alarm
+- [ ] The buzzer stops immediately when the system is disarmed, even mid-alarm  
+
+**Task 6**
+```cpp
+/*
+=== Task 6 - Nested if Arm/Disarm System ===
+          Author: Roberto Palozzo
+============================================
+*/
+
+const int ARM_BUTTON_PIN = 4;                          // arm/disarm push button
+const int PIR_PIN = 5;                                 // PIR motion sensor output
+const int BUZZER_PIN = 7;                              // passive buzzer
+
+bool systemArmed = false;                              // global: current armed/disarmed state
+int lastButtonState = HIGH;                            // global: button state from the previous loop, used for edge detection
+
+// Plays a rising/falling siren tone by sweeping the buzzer frequency
+// up and down between 600Hz and 1600Hz, one step per call
+void startSiren() {
+  static int frequency = 600;                          // keeps its value between calls (only set to 600 the very first time)
+  static int direction = 20;                           // how much to change frequency each call, and which way (+ or -)
+
+  tone(BUZZER_PIN, frequency);                         // play the current frequency
+  frequency += direction;                              // step the frequency for the next call
+
+  if (frequency >= 1600) {
+    direction = -20;                                   // reached the top, start sweeping down
+  }
+  else if (frequency <= 600) {
+    direction = 20;                                    // reached the bottom, start sweeping up
+  }
+}
+
+// Stops the siren sound
+void stopSiren() {
+  noTone(BUZZER_PIN);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(ARM_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(PIR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  stopSiren();                                         // make sure the buzzer starts silent
+  Serial.println("System disarmed");
+}
+
+void loop() {
+  int buttonState = digitalRead(ARM_BUTTON_PIN);
+
+  // Detect a fresh press (edge): pressed now, but NOT pressed last loop.
+  // Prevents the toggle firing repeatedly while the button is held down.
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    delay(30);                                         // debounce: wait out any electrical bounce
+
+    if (digitalRead(ARM_BUTTON_PIN) == LOW) {          // confirm it's still pressed after the delay
+      systemArmed = !systemArmed;                      // flip the armed state
+
+      if (systemArmed) {
+        Serial.println("System armed");
+      }
+      else {
+        stopSiren();                                   // stop any alarm immediately on disarm
+        Serial.println("System disarmed");
+      }
+    }
+  }
+
+  lastButtonState = buttonState;                       // update for next loop's edge check (must run every loop)
+
+  // Only watch for motion while the system is armed
+  if (systemArmed) {
+    int motionDetected = digitalRead(PIR_PIN);
+
+    if (motionDetected == HIGH) {
+      startSiren();
+    }
+    else {
+      stopSiren();
+    }
+  }
+  else {
+    stopSiren();                                       // extra safety: buzzer always off while disarmed
+  }
+
+  delay(100);
+}
+```
+https://wokwi.com/projects/472587460876988417
 
 ---
 
 ## Task 7 - Spot-the-Bug Worksheet (Extension)
 
-
-
 **Round 1:**
 ```cpp
 void setup() {
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);            // With INPUT_PULLUP the buttonState must be LOW.
   pinMode(LED_PIN, OUTPUT);
 }
 
 void loop() {
   int buttonState = digitalRead(BUTTON_PIN);
 
-  if (buttonState == HIGH) {
+  if (buttonState == HIGH) {                    // It must be: if (buttonState == LOW) {
     digitalWrite(LED_PIN, HIGH);
     Serial.println("Button pressed");
   }
@@ -270,7 +596,7 @@ void loop() {
 ```cpp
 void loop() {
   int potValue = analogRead(potPin);
-  int brightness = map(potValue, 0, 255, 0, 4095);
+  int brightness = map(potValue, 0, 255, 0, 4095); // Reversed ranges in map(): should be map(potValue, 0, 4095, 0, 255).
   analogWrite(ledPin, brightness);
 }
 ```
@@ -281,7 +607,9 @@ void loop() {
 void loop() {
   int motionDetected = digitalRead(PIR_PIN);
 
-  if (motionDetected = HIGH) {
+  if (motionDetected = HIGH) {    //Here we are inside an "if" statement.  
+  //It involves comparing one value with another, which is done with ==.  
+  // Here, a value has been assigned with =.
     digitalWrite(BUZZER_PIN, HIGH);
   }
 }
@@ -290,14 +618,14 @@ void loop() {
 
 **Round 4:**
 ```cpp
-void loop() {
+void loop() {   // isnan() = "is Not a Number" is totally missing
   float humidity = dht.readHumidity();
   float temperatureC = dht.readTemperature();
 
   Serial.print("Temp: ");
   Serial.println(temperatureC);
 
-  delay(100);
+  delay(100);   // delay is too short and the sensor can give wrong data
 }
 ```
 <details><summary>Answer</summary>Two problems: there's no <code>isnan()</code> check for a failed read, and the DHT22 is polled every 100 ms — it can only be read reliably about once every 2 seconds, so this will frequently return stale or invalid data.</details>
@@ -305,11 +633,12 @@ void loop() {
 **Round 5:**
 ```cpp
 void loop() {
-  int redButton = digitalRead(redButtonPin);
+  int redButton = digitalRead(redButtonPin);    // Is missing the part for the green button
+                                                // int greenButton = digitalRead(greenButtonPin);
 
   if (redButton == LOW) {
     digitalWrite(redLED, HIGH);
-  } else if (redButton == LOW) {
+  } else if (redButton == LOW) {                // this must be: } else if (greenButton == LOW) {
     digitalWrite(greenLED, HIGH);
   }
 }
@@ -319,7 +648,9 @@ void loop() {
 **Round 6:**
 ```cpp
 bool systemArmed = false;
-
+// Edge detection is missing (no comparison with lastButtonState).  
+// While the button is held down, systemArmed flips multiple  
+// times rapidly in 10ms, instead of changing once per press.
 void loop() {
   int buttonState = digitalRead(ARM_BUTTON_PIN);
 
