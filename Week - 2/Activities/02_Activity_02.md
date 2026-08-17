@@ -258,7 +258,7 @@ void loop() {
   lightLED(7, 200);             // chase to last LED, then loop repeats
 }
 ```
-https://wokwi.com/projects/471953115893900289
+https://wokwi.com/projects/471953115893900289  
 https://wokwi.com/projects/471956839488893953 (with buzzer and oled)
 
 ---
@@ -418,6 +418,119 @@ Wokwi https://wokwi.com/projects/471514510742063105
 - [ ] `pedestrianCanCross()` returns `true` only when the traffic light is red
 - [ ] The OLED/LCD text matches the pedestrian light state (`"STOP"` vs `"GO"`)
 
+**Task 6:**
+```cpp
+/*
+==== Task 6 - Miniature Traffic-Light System ====
+             Author: Roberto Palozzo
+=================================================
+*/
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+const int buzzerPin = 4;                         // active buzzer, warns on colour change
+const int redledPin = 5;                         // pedestrian LED (lit = safe to cross)
+const int oledsdaPin = 8;                        // OLED I2C data pin
+const int oledsclPin = 9;                        // OLED I2C clock pin
+const int rgbPin_R = 14;                         // RGB LED - red channel
+const int rgbPin_B = 17;                         // RGB LED - blue channel (unused, always LOW)
+const int rgbPin_G = 18;                         // RGB LED - green channel
+
+bool isRed = false;                              // global flag: true while the traffic light is red
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);  // OLED display object
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32-S3!");
+
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(redledPin, OUTPUT);
+  pinMode(rgbPin_R, OUTPUT);
+  pinMode(rgbPin_B, OUTPUT);
+  pinMode(rgbPin_G, OUTPUT);
+
+  Wire.begin(oledsdaPin, oledsclPin);            // start I2C on custom pins
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);     // initialize OLED at I2C address 0x3C
+  display.clearDisplay();                        // clear display buffer
+  display.setTextColor(SSD1306_WHITE);           // set text color
+  display.display();                             // apply initial blank screen
+}
+
+// ===== Function WITHOUT parameters =====
+// Flashes the pedestrian LED and beeps the buzzer 4 times
+void warnChange() {
+  for (int i = 0; i < 4; i++) {
+    digitalWrite(redledPin, HIGH);               // LED on
+    tone(buzzerPin, 400);                        // beep on
+    delay(200);
+    digitalWrite(redledPin, LOW);                // LED off
+    noTone(buzzerPin);                           // beep off
+    delay(200);
+  }
+}
+
+// ===== Function WITH parameters =====
+// Turns on only the requested RGB colour(s) for onTime ms, then turns them off
+void setTrafficLight(int redPin, int bluePin, int greenPin, int onTime) {
+  isRed = redPin;                                // remember if red is on during this call
+  digitalWrite(rgbPin_R, redPin);
+  digitalWrite(rgbPin_B, bluePin);
+  digitalWrite(rgbPin_G, greenPin);
+  delay(onTime);                                 // keep the colour on for onTime ms
+  digitalWrite(rgbPin_R, LOW);                   // turn everything off before returning
+  digitalWrite(rgbPin_B, LOW);
+  digitalWrite(rgbPin_G, LOW);
+}
+
+// ===== Function WITH a return value (no parameters) =====
+// Returns true while the traffic light is red (safe to cross)
+bool pedestrianCanCross() {
+  return isRed;                                  // reads the global flag set by setTrafficLight()
+}
+
+void loop() {
+  // ---- GREEN (traffic) ----
+  Serial.println("Phase: GREEN");
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 20);
+  display.println("Stop!");                      // pedestrians must wait, cars are moving
+  display.display();
+  digitalWrite(redledPin, LOW);                  // pedestrian LED off (not safe yet)
+
+  setTrafficLight(LOW, LOW, HIGH, 5000);         // green on for 5s
+  delay(10);
+
+  warnChange();                                  // warn: light is about to change
+
+  // ---- YELLOW (traffic) ----
+  setTrafficLight(HIGH, LOW, HIGH, 1500);        // red+green = yellow, 1.5s
+
+  warnChange();                                  // warn: about to turn red
+
+  // ---- RED (traffic) ----
+  Serial.println("Phase: RED");
+  bool canCross = pedestrianCanCross();          // check if it's safe to cross
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 20);
+  display.println(canCross ? "Go !" : "Stop!");  // show GO only when true
+  display.display();
+  digitalWrite(redledPin, canCross);             // pedestrian LED on (safe to cross)
+
+  setTrafficLight(HIGH, LOW, LOW, 5000);         // red on for 5s
+  delay(10);
+}
+
+```
+https://wokwi.com/projects/472143174642579457
+
 ---
 
 ## Task 7 - Electronic Music Box (Capstone)
@@ -467,6 +580,145 @@ Wokwi https://wokwi.com/projects/471518431484812289
 - [ ] The note LED flashes in time with each note
 - [ ] The RGB LED visibly changes colour as the melody plays
 
+**Task 7:**
+```cpp
+/*
+==== Task 7 - Electronic Music Box (Capstone) ====
+         Author: Roberto Palozzo
+==================================================
+*/
+
+#include <Wire.h>                                // I2C communication library
+#include <Adafruit_GFX.h>                        // graphics library for the OLED
+#include <Adafruit_SSD1306.h>                    // driver library for the OLED display
+
+#define SCREEN_WIDTH 128                         // OLED width in pixels
+#define SCREEN_HEIGHT 64                         // OLED height in pixels
+
+const int buzzerPin = 4;                         // active buzzer, plays each note
+const int noteledPin = 5;                        // note LED (lit while a note is playing)
+const int oledsdaPin = 8;                        // OLED I2C data pin
+const int oledsclPin = 9;                        // OLED I2C clock pin
+const int rgbPin_R = 14;                         // RGB LED - red channel
+const int rgbPin_B = 17;                         // RGB LED - blue channel
+const int rgbPin_G = 18;                         // RGB LED - green channel
+
+const int NOTE_COUNT = 8;                        // total number of notes in the melody
+
+int currentNote = 0;                             // global: tracks which note is currently playing
+
+// Simple melody - each array below is "aligned" by index:
+// melody[i], durations[i] and noteNames[i] all describe the SAME note i
+int melody[NOTE_COUNT] = {
+  262, 294, 330, 349, 392, 440, 494, 523         // frequency (Hz) of each note
+};
+
+int durations[NOTE_COUNT] = {
+  400, 400, 400, 400, 400, 400, 400, 800         // how long each note should play (ms)
+};
+
+const char* noteNames[NOTE_COUNT] = {
+  "C", "D", "E", "F", "G", "A", "B", "High C"    // name shown on the OLED for each note
+};
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);  // OLED display object
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32-S3!");
+
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(noteledPin, OUTPUT);
+  pinMode(rgbPin_R, OUTPUT);
+  pinMode(rgbPin_B, OUTPUT);
+  pinMode(rgbPin_G, OUTPUT);
+
+  Wire.begin(oledsdaPin, oledsclPin);            // start I2C on custom pins
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);     // initialize OLED at I2C address 0x3C
+  display.clearDisplay();                        // clear display buffer
+  display.setTextColor(SSD1306_WHITE);           // set text color
+  display.display();                             // apply initial blank screen
+
+  startMelody();                                 // run the intro once, before the song starts
+}
+
+// ===== Function WITHOUT parameters =====
+// Shows a "Now Playing!" message on the OLED and briefly cycles
+// the RGB LED through red, green and blue before the song begins.
+void startMelody() {
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setCursor(0, 20);
+  display.println("Now Playing!");               // step 1: show the intro message
+  display.display();
+
+  digitalWrite(rgbPin_R, HIGH);                  // step 2: cycle through all three colours
+  delay(200);
+  digitalWrite(rgbPin_R, LOW);
+  digitalWrite(rgbPin_G, HIGH);
+  delay(200);
+  digitalWrite(rgbPin_G, LOW);
+  digitalWrite(rgbPin_B, HIGH);
+  delay(200);
+  digitalWrite(rgbPin_B, LOW);                   // turn everything off before returning
+}
+
+// ===== Function WITH parameters =====
+// Plays a single note on the buzzer at "frequency" for "duration" ms,
+// flashing the note LED for the same length of time.
+void playNote(int frequency, int duration) {
+  tone(buzzerPin, frequency);                    // start playing the tone
+  digitalWrite(noteledPin, HIGH);                // turn on the note LED
+  delay(duration);                               // keep the tone/LED on for "duration" ms
+  noTone(buzzerPin);                             // stop the tone
+  digitalWrite(noteledPin, LOW);                 // turn off the note LED
+}
+
+// ===== Function WITH a return value (no parameters) =====
+// Looks up how long the CURRENT note (given by currentNote) should last,
+// by reading the matching value from the durations[] array.
+int getNoteDuration() {
+  return durations[currentNote];
+}
+
+void loop() {
+  // Play through the whole melody, one note per iteration
+  for (int noteCount = 0; noteCount < NOTE_COUNT; noteCount++) {
+    int duration = getNoteDuration();            // duration of the current note
+
+    // ---- update the OLED with the current note's name ----
+    display.clearDisplay();
+    display.setTextSize(2);
+    display.setCursor(0, 20);
+    display.println(noteNames[currentNote]);     // show the note name (e.g. "C", "D"...)
+    display.display();
+
+    // ---- change the RGB LED colour every note (cycles R -> G -> B) ----
+    // "% 3" gives a remainder of 0, 1 or 2, so the colour rotates through
+    // all three channels as currentNote increases
+    if (currentNote % 3 == 0) {
+      digitalWrite(rgbPin_R, HIGH);
+      digitalWrite(rgbPin_G, LOW);
+      digitalWrite(rgbPin_B, LOW);
+    } else if (currentNote % 3 == 1) {
+      digitalWrite(rgbPin_R, LOW);
+      digitalWrite(rgbPin_G, HIGH);
+      digitalWrite(rgbPin_B, LOW);
+    } else {
+      digitalWrite(rgbPin_R, LOW);
+      digitalWrite(rgbPin_G, LOW);
+      digitalWrite(rgbPin_B, HIGH);
+    }
+
+    playNote(melody[currentNote], duration);     // play the note's frequency for its duration
+
+    currentNote++;                               // move on to the next note
+  }
+
+  currentNote = 0;                               // reset so the melody restarts from the beginning
+}
+```
+
 ---
 
 
@@ -474,11 +726,36 @@ Wokwi https://wokwi.com/projects/471518431484812289
 
 Answer these in your own words before moving on:
 
-1. What is the difference between a function with parameters and a function without parameters?
-2. Why is `showColor(pin, onTime)` more flexible than a fixed `showColor()` with no parameters?
-3. What does `return` do inside a function, and why don't `void` functions use it?
-4. In Task 1, what would happen if `beep()` didn't exist and you had to write out every beep manually?
-5. Why do `setup()` and `loop()` not need to be called manually anywhere in your code?
+1. What is the difference between a function with parameters and a function without parameters?  
+    **Answer:** A function without parameters works with fixed internal parameters and the result  
+    is always the same, while with external parameters the result can change when the  
+    parameters receive variable data from outside.
+
+2. Why is `showColor(pin, onTime)` more flexible than a fixed `showColor()` with no parameters?  
+    **Answer:** It's more flexible because the same function can be used for many different pins,  
+    without writing a new one for each LED. The onTime duration can vary,  
+    and the code can be shorter.
+
+3. What does `return` do inside a function, and why don't `void` functions use it?  
+    **Answer:** "return" immediately stops the function. It returns program control to the exact  
+    point where the function was called. It sends a return value (a number, a string, an object)  
+    to the calling code. The return statement terminates the execution of a function and returns  
+    a value to the calling code.  
+    A "void" function performs an operation but does not calculate a value to pass back, and the  
+    function terminates naturally when it reaches the last line of its code block.
+
+4. In Task 1, what would happen if `beep()` didn't exist and you had to write out every beep manually?  
+    **Answer:** Without beep(), the same block of code would have to be written three times in  
+    the loop for: tone, delay, stop, delay, only changing the onTime value each time. The code  
+    would become longer, more repetitive, and more error-prone, and if you wanted to change  
+    something in the future (e.g., the frequency of the tone), the code would have to be changed  
+    in three places instead of just one.
+    
+5. Why do `setup()` and `loop()` not need to be called manually anywhere in your code?  
+    **Answer:** The setup() and loop() functions should not be called manually because they are  
+    handled automatically by the system, which executes setup() only once at startup and repeats  
+    loop() infinitely. Calling them manually would create logic errors and block the normal flow  
+    of the program.
 
 ---
 
