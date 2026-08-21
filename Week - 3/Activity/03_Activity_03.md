@@ -382,7 +382,8 @@ Read the temperature each loop with the DHT library (read no more than once ever
 - [ ] Exactly one of the three labels prints per reading, never more than one
 - [ ] Conditions are ordered so a later, broader condition can't accidentally catch a case meant for an earlier one
 
-
+**Task 5:**
+```cpp
 /*
 === Task 5 - Comfort Monitor Using if / else if / else ===
                   Author: Roberto Palozzo
@@ -666,6 +667,15 @@ void loop() {
 
 **Round 7:**
 ```cpp
+// This is nested code, and the afterHours condition is empty.
+// The empty statement would be skipped as if it didn't exist.
+// I would write it like this:
+
+// if (motionDetected == HIGH && afterHours) { // The buzzer sounds because both of conditions are true.
+//     digitalWrite(BUZZER_PIN, HIGH);
+//     }
+
+    if (afterHours) {
 void loop() {
   int motionDetected = digitalRead(PIR_PIN);
   bool afterHours = true;
@@ -679,7 +689,8 @@ void loop() {
 ```
 <details><summary>Answer</summary>The nested <code>if (afterHours)</code> block is empty — <code>digitalWrite(BUZZER_PIN, HIGH)</code> sits outside it, so the buzzer fires on motion alone and <code>afterHours</code> has no effect at all. The buzzer line needs to move inside the nested block.</details>
 
-**Self-check:** How many did you spot correctly before looking?
+**Self-check:** How many did you spot correctly before looking?  
+**In this activity I answered 5 questions and checked two answers.**
 
 ---
 
@@ -746,7 +757,140 @@ flowchart LR
 - [ ] The buzzer only activates when motion **and** `afterHours` are both true
 - [ ] The potentiometer's mapped value visibly changes the buzzer's PWM intensity
 - [ ] The DHT22 read is guarded with `isnan()` and never polled faster than every 2 seconds
-- [ ] Temperature classification uses `if / else if / else` with conditions ordered correctly (narrowest first)
+- [ ] Temperature classification uses `if / else if / else` with conditions ordered correctly (narrowest first)  
+****Task 8**
+```cpp
+/*
+=== Task 8 - Smart Environment Monitor ===
+          Author: Roberto Palozzo
+==========================================
+*/
+
+#include <DHT.h>                                                 // library for reading DHT-series sensors
+#define DHTPIN 15                                                // pin connected to the DHT22 data pin (moved from GPIO6, reserved on ESP32-S3)
+#define DHTTYPE DHT22                                            // sensor model
+DHT dht(DHTPIN, DHTTYPE);                                        // create the DHT sensor object
+
+const int POT_PIN = 1;                                           // potentiometer wiper, controls buzzer pitch
+const int LED_PIN = 2;                                           // status LED, on while armed
+const int ARM_BUTTON_PIN = 4;                                    // arm/disarm push button
+const int PIR_PIN = 5;                                           // PIR motion sensor output
+const int BUZZER_PIN = 7;                                        // passive buzzer
+
+bool systemArmed = false;                                        // global: current armed/disarmed state
+bool afterHours = true;                                          // manually simulates whether it's after working hours
+int lastButtonState = HIGH;                                      // global: button state from the previous loop, used for edge detection
+
+// Starts the buzzer at the given frequency (controlled by the potentiometer)
+void startBuzzer(int frequency) {
+  tone(BUZZER_PIN, frequency);                                   // play the current frequency
+}
+
+// Stops the buzzer sound
+void stopBuzzer() {
+  noTone(BUZZER_PIN);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(ARM_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(PIR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
+  // note: POT_PIN needs no pinMode() - analogRead() works without configuring the pin first
+  
+  noTone(BUZZER_PIN);                                            // make sure the buzzer starts silent
+  Serial.println("System disarmed");
+  Serial.println("DHT22 Temperature and Humidity Sensor");
+  dht.begin();                                                   // start the DHT sensor
+}
+
+void loop() {  
+  int buttonState = digitalRead(ARM_BUTTON_PIN);                 // read the arm button fresh every loop
+  float humidity = dht.readHumidity();                           // read humidity (%)
+  float temperature = dht.readTemperature();                     // read temperature in Celsius
+
+  // ---- 1. Edge-detected arm/disarm toggle (nested if) ----
+  // Detect a fresh press (edge): pressed now, but NOT pressed last loop.
+  // Prevents the toggle firing repeatedly while the button is held down.
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    delay(30);                                                   // debounce: wait out any electrical bounce
+
+    if (digitalRead(ARM_BUTTON_PIN) == LOW) {                    // confirm it's still pressed after the delay
+      systemArmed = !systemArmed;                                // flip the armed state
+
+      if (systemArmed) {
+        Serial.println("System armed");
+        digitalWrite(LED_PIN, HIGH);                             // status LED on while armed
+      }
+      else {
+        stopBuzzer();                                            // stop any alarm immediately on disarm
+        Serial.println("System disarmed");
+        digitalWrite(LED_PIN, LOW);                              // status LED off while disarmed
+      }
+    }
+  }
+
+  lastButtonState = buttonState;                                 // update for next loop's edge check (must run every loop)
+
+  // ---- 2. Motion + after-hours alert, with potentiometer-controlled buzzer pitch ----
+  // Only watch for motion while the system is armed
+  if (systemArmed) {
+    int motionDetected = digitalRead(PIR_PIN);                   // check the PIR only when armed
+
+    // alarm condition: motion AND after hours must both be true
+    if (afterHours && motionDetected == HIGH) {
+      int potValue = analogRead(POT_PIN);                        // read the potentiometer (0 to 4095)
+      int buzzerFrequency = map(potValue, 0, 4095, 200, 2000);   // convert the reading to a tone frequency (Hz)
+      buzzerFrequency = constrain(buzzerFrequency, 200, 2000);   // guard against any out-of-range values
+
+      startBuzzer(buzzerFrequency);                              // knob controls the alert's pitch
+    }
+    else {
+      stopBuzzer();                                              // no alarm condition: buzzer off
+    }
+  }
+  else {
+    stopBuzzer();                                                // extra safety: buzzer always off while disarmed
+  }
+
+delay(100);                                                      // short pause before the DHT22 section
+
+  // ---- 3. Climate monitoring, independent of armed state (if/else if/else) ----
+  // isnan() = "is Not a Number" - the DHT library returns NaN instead of
+  // a real value when a read fails, so check before using any of the values
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Failed to read from DHT22 sensor!");
+    delay(2000);
+    return;                                                      // skip the rest of loop() and try again next time
+  }
+
+  // classify the temperature into one of three bands
+  // (checked from narrowest/lowest to widest, so no band accidentally catches another's case)
+  if (temperature < 15) {
+    Serial.println("Cold");
+  }
+  else if (temperature >= 15 && temperature <= 29) {
+    Serial.println("Confortable");
+  }
+  else {
+    Serial.println("Hot");                                       // covers 30°C and above (plus the 29-30 gap)
+  }
+
+  // print the raw readings
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %\t");
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C\t");
+
+  delay(2000);                                                   // DHT22 updates slowly, so wait 2 seconds before the next read  
+}
+```
+https://wokwi.com/projects/472638636612236289  
 
 ---
 
@@ -755,35 +899,57 @@ flowchart LR
 Answer these in your own words before moving on:
 1. Why does `INPUT_PULLUP` read `LOW` when pressed, while `INPUT_PULLDOWN` reads `HIGH` when pressed?
   ```
-
-
+With INPUT_PULLUP the internal resistance keeps the voltage on the output pin at 3.3V. 
+When the button is pushed down, the pin is connected to ground and the voltage becomes 0V, which corresponds to LOW.  
+With INPUT_PULLDOWN, the internal resistance keeps the pin connected to ground (0V) by default.  
+When the button is pressed, the pin is connected to 3.3V instead, which corresponds to HIGH.
   ```
 2. What's the practical difference between `if`, `if / else`, and `if / else if / else` in terms of how many branches can run per loop?
   ```
-
-
+With "if" only one block of code is executed. If false, nothing happens. With two "if" statements, as in Task 1, one block at a time is executed from top to bottom. Both can be true and therefore be executed one at a time, independent of each other, depending on the condition.  
+With if / else, the code that evaluates to true is executed. The other is skipped. The same happens with if / else if / else.
   ```
 3. Why does `&&` require both conditions to be true, while `||` only needs one? Give a real-world example of each from this activity.
   ```
+  The two &&s mean "and," so the two conditions must be true, equal. If both conditions are true, the result is true; otherwise, it's false. With ||, meaning "or," one of the two conditions must be true, either one or the other. If either condition is true, the result is true.
 
+  The following exemple is taken from Task 3:
+  // Sound the alarm only when BOTH conditions are true:
+  // motion is detected AND it's currently after hours
+  if (afterHours == true && motionDetected == HIGH) {                      // THE CONDITION HERE IS 'AND'.
+    startSiren();'
+    Serial.println("Detected movements. ALARM!");
+  }
+  else {
+    stopSiren();
+    Serial.println("Undetected movements. All Good! ");
+  }
 
+  The following exemple is taken from Task 5:
+  // isnan() = "is Not a Number" - the DHT library returns NaN instead of
+  // a real value when a read fails, so check before using any of the values
+  if (isnan(humidity) || isnan(temperature)) {                             // THE CONDITION HERE IS 'OR'.
+    Serial.println("Failed to read from DHT22 sensor!");
+    delay(2000);
+    return;                                       // skip the rest of loop() and try again next time
+  }
   ```
 4. In Task 6/8, why is edge detection (comparing to `lastButtonState`) necessary instead of just checking `if (buttonState == LOW)` on its own?
 
   ```
-
-
+  When the button is pressed, the loop runs many times in a row, and the pin reads LOW on every single pass. By adding edge detection, the condition is established at the exact moment it happens. It would be like pressing a doorbell button. The first state says the button is pressed for as long as it remains in that state; the second says the button has been pressed, so the bell rings with a single chime even if the button is held down for a long time.
   ```
 5. Why must the most specific condition be checked first in an `if / else if / else` chain?
   ```
-
-
+  The most specific condition must be checked first because an if/else if/else chain is evaluated from top to bottom and stops as soon as the first condition is true.
+  For example, if the first "if" condition is true, the subsequent conditions are skipped.
+  If the first "if" condition is false, it also checks the second "else if." If this condition is true, the rest is skipped; otherwise, it also checks the third "else" condition.
   ```
 
 6. Why does the DHT22 need to be read with `millis()`-style timing instead of a short `delay()`, unlike a button or PIR sensor?
   ```
-
-
+  The DHT22 has a physical hardware limit: it can only be reliably polled once every 2 seconds.
+  Using delay(2000) to meet this limit blocks the entire program for a full 2 ​​seconds, as in Task 8, including the button and PIR, which should remain responsive at all times. With millis(), however, the program continues to run freely, reading the button/PIR every cycle, without delay, and only reads the DHT22 when 2000 ms have actually passed since millis(), without ever stopping the rest of the system.
   ```
 
 
