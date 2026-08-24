@@ -41,12 +41,58 @@ Write a function `blink_led(int pin, int times, int onTime)` that blinks the LED
 
 >
 > Wokwi link: https://wokwi.com/projects/472678434137535489
+>
 
 **Check yourself:**
 - [ ] `blink_led()` takes a pin, a count, and a timing parameter — nothing about which LED or its speed is hard-coded inside the function
 - [ ] `loop()` only calls `blink_led()`; it contains no raw `digitalWrite`/`delay` of its own
 - [ ] The red, green, and blue LEDs are all driven by the same function, and each one visibly blinks at a different speed from the other two
 
+**Task 1**
+```cpp
+/*
+=== Task 1 - Blink Function With Parameters ======
+            Author: Roberto Palozzo
+==================================================
+*/
+
+// LED pin assignments
+const int led_R = 13;
+const int led_G = 6;
+const int led_B = 4;
+
+// Blinks the LED on 'pin' exactly 'times' times, staying on and off for
+// 'onTime' milliseconds each time. This version is self-contained: it
+// doesn't need to remember anything between calls, because it finishes
+// all of its blinking before returning (blocking, via delay()).
+void blink_led(int pin, int times, int onTime) {
+  for (int i = 0; i < times; i++) {
+    digitalWrite(pin, HIGH);                                  // turn the LED on
+    delay(onTime);                                            // stay on for onTime ms
+    digitalWrite(pin, LOW);                                   // turn the LED off
+    delay(onTime);                                            // stay off for onTime ms
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32-S3!");
+  pinMode(led_R, OUTPUT);
+  pinMode(led_G, OUTPUT);
+  pinMode(led_B, OUTPUT);
+}
+
+void loop() {
+  // loop() only calls blink_led() - no raw digitalWrite/delay directly here
+  // (delay() lives inside blink_led(), which the checklist allows).
+  blink_led(led_R, 20, 200);                                  // red: 20 blinks, fast (200 ms on/off)
+  blink_led(led_G, 8, 500);                                   // green: 8 blinks, medium (500 ms on/off)
+  blink_led(led_B, 5, 800);                                   // blue: 5 blinks, slow (800 ms on/off)
+}
+```
+>
+> Wokwi link: https://wokwi.com/projects/473057780608532481
+>
 ---
 
 ## Task 2 - PIR/Button Priority Alert Using Selection
@@ -93,6 +139,11 @@ Write `read_pir()` and `read_button()` as functions returning `bool`. In `loop()
 - [ ] Triggering both inputs at the same time always shows `"Motion"`, never `"Button"`
 - [ ] The LED turns off only when neither input is active, and updates immediately every pass
 - [ ] The status is only printed to Serial at most once every `reportInterval` (500 ms), using `millis()` — not on every pass, and not via `delay()`
+
+**Task 2**
+```cpp
+
+```
 
 ---
 

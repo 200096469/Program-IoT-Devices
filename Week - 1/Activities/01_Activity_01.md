@@ -66,8 +66,9 @@ void loop() {
   delay(1000);
 }
 ```
-https://wokwi.com/projects/471388867031124993
-
+>
+> Wokwi link: https://wokwi.com/projects/471388867031124993
+>
 ---
 
 ## Task 2 - Custom Device Start-Up Sequence
@@ -127,8 +128,9 @@ void loop() {
   delay(2000);
 }
 ```
-https://wokwi.com/projects/471592836535198721
-
+>
+> Wokwi link: https://wokwi.com/projects/471592836535198721
+>
 ---
 
 ## Task 3 - Blink Patterns (Extension)
@@ -180,8 +182,9 @@ void loop() {
   delay(longPause);
 }
 ```
-https://wokwi.com/projects/471604323201745921
-
+>
+> Wokwi link: https://wokwi.com/projects/471604323201745921
+>
 ---
 
 ## Task 4 - Annotated Code (Extension)
@@ -218,8 +221,9 @@ void loop() {
   delay(1000);                             // Keep the LED OFF for 1000 ms or 1 second
 }
 ```
-https://wokwi.com/projects/471468429836264449
-
+>
+> Wokwi link: https://wokwi.com/projects/471468429836264449
+>
 ---
 
 ## Task 5 - Find and Fix the Bugs (Extension)
@@ -273,8 +277,9 @@ void loop() {
   delay(500);                              // Keep the LED OFF for 500 ms or half second
 }
 ```
-https://wokwi.com/projects/471469955015348225
-
+>
+> Wokwi link: https://wokwi.com/projects/471469955015348225
+>
 ---
 
 ### Bug Set B 
@@ -327,8 +332,9 @@ void loop() {
   delay(500);
 }
 ```
-https://wokwi.com/projects/471468786632111105
-
+>
+> Wokwi link: https://wokwi.com/projects/471468786632111105
+>
 ---
 
 ### Bug Set C
@@ -377,8 +383,9 @@ void loop() {
   delay(1000);
 }
 ```
-https://wokwi.com/projects/471923319088985089
-
+>
+> Wokwi link: https://wokwi.com/projects/471923319088985089
+>
 ---
 
 ## Questions

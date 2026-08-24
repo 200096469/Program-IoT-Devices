@@ -56,7 +56,7 @@ void loop() {
   delay(2000);   // 2 sec pause before repeating the SOS signal
 }
 ```
-https://wokwi.com/projects/471932128763166721
+>https://wokwi.com/projects/471932128763166721
 
 ---
 
@@ -134,8 +134,9 @@ void loop() {
   showWhite(500);            // show white for 500 ms
 }
 ```
-https://wokwi.com/projects/471944181333836801
-
+>
+> Wokwi link: https://wokwi.com/projects/471944181333836801
+>
 ---
 
 ## Task 3 - Function With a Return Value
@@ -194,8 +195,9 @@ void loop() {
   delay(1000);                           // wait 1 second
 }
 ```
-https://wokwi.com/projects/471947692141498369
-
+>
+> Wokwi link: https://wokwi.com/projects/471947692141498369
+>
 ---
 
 ## Task 4 - LED Chase Sequence Using a Function
@@ -258,9 +260,10 @@ void loop() {
   lightLED(7, 200);             // chase to last LED, then loop repeats
 }
 ```
-https://wokwi.com/projects/471953115893900289  
-https://wokwi.com/projects/471956839488893953 (with buzzer and oled)
-
+>
+> Wokwi link: https://wokwi.com/projects/471953115893900289  
+> Wokwi link: https://wokwi.com/projects/471956839488893953 (with buzzer and oled)
+>
 ---
 
 ## Task 5 - Spot-the-Bug Worksheet (Extension)
@@ -529,8 +532,9 @@ void loop() {
 }
 
 ```
-https://wokwi.com/projects/472143174642579457
-
+>
+> Wokwi link: https://wokwi.com/projects/472143174642579457
+>
 ---
 
 ## Task 7 - Electronic Music Box (Capstone)
@@ -718,8 +722,9 @@ void loop() {
   currentNote = 0;                               // reset so the melody restarts from the beginning
 }
 ```
-https://wokwi.com/projects/472398042357475329
-
+>
+> Wokwi link: https://wokwi.com/projects/472398042357475329
+>
 ---
 
 

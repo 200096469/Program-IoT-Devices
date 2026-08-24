@@ -77,8 +77,9 @@ void loop() {
   delay(100);
 }
 ```
-https://wokwi.com/projects/472572266370854913
-
+>
+> Wokwi Link: https://wokwi.com/projects/472572266370854913
+>
 ---
 
 ## Task 2 - Pull-Down Comparison Using `if / else`
@@ -157,8 +158,9 @@ void loop() {
   delay(100);
 }
 ```
-https://wokwi.com/projects/472572028022153217
-
+>
+> Wokwi Link: https://wokwi.com/projects/472572028022153217
+>
 ---
 
 ## Task 3 - PIR Motion Alert Using Boolean Logic
@@ -256,8 +258,9 @@ void loop() {
   delay(100);                       // small pause between readings
 }
 ```
-https://wokwi.com/projects/472573140859288577
-
+>
+> Wokwi Link: https://wokwi.com/projects/472573140859288577
+>
 ---
 
 ## Task 4 - Potentiometer Dimmer With a Low-Brightness Warning
@@ -343,8 +346,9 @@ void loop() {
   delay(100);                                       // small pause: keeps the dimmer smooth while the Serial Monitor stays readable
 }
 ```
-https://wokwi.com/projects/472579212917670913
-
+>
+> Wokwi Link: https://wokwi.com/projects/472579212917670913
+>
 ---
 
 ## Task 5 - Comfort Monitor Using `if / else if / else`
@@ -438,8 +442,9 @@ void loop() {
   delay(2000);                                    // DHT22 updates slowly, so wait 2 seconds before the next read
 }
 ```
-https://wokwi.com/projects/472582319708664833
-
+>
+> Wokwi Link: https://wokwi.com/projects/472582319708664833
+>
 ---
 
 ## Task 6 - Nested `if` Arm/Disarm System
@@ -569,8 +574,9 @@ void loop() {
   delay(100);
 }
 ```
-https://wokwi.com/projects/472587460876988417
-
+>
+> Wokwi Link: https://wokwi.com/projects/472587460876988417
+>
 ---
 
 ## Task 7 - Spot-the-Bug Worksheet (Extension)
@@ -890,8 +896,9 @@ delay(100);                                                      // short pause 
   delay(2000);                                                   // DHT22 updates slowly, so wait 2 seconds before the next read  
 }
 ```
-https://wokwi.com/projects/472638636612236289  
-
+>
+> Wokwi Link: https://wokwi.com/projects/472638636612236289  
+>
 ---
 
 ## Questions

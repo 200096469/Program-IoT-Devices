@@ -68,42 +68,166 @@ flowchart LR
 > Wokwi Link : https://wokwi.com/projects/472676603111416833
 >
 
+**Task** - Combining Multiple Sensors
+```cpp
+/*
+=== Task - Combining Multiple Sensors (Week 4) ===
+            Author: Roberto Palozzo
+==================================================
+*/
+
+#include <Wire.h>                                // I2C communication library
+#include <Adafruit_GFX.h>                        // graphics library for the OLED
+#include <Adafruit_SSD1306.h>                    // driver library for the OLED display
+
+#define SCREEN_WIDTH 128                         // OLED width in pixels
+#define SCREEN_HEIGHT 64                         // OLED height in pixels
+
+constexpr uint8_t buttonPin = 2;
+constexpr uint8_t pirPin = 3;
+constexpr uint8_t buzzerPin = 7;
+constexpr uint8_t oledsdaPin = 8;                // OLED I2C data pin
+constexpr uint8_t oledsclPin = 9;
+constexpr uint8_t ledPin = 13;
+constexpr uint16_t buzzerHz = 2000;
+
+unsigned long buzzerStartTime = 0;
+int buzzerDuration = 0;
+bool buzzerActive = false;
+
+String previousStatus = "";      // per rilevare quando lo stato cambia
+bool lastMotionState = false;    // per il fronte di salita del PIR
+bool lastButtonState = false;    // stesso concetto per il bottone
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);  // oggetto display OLED
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Hello, ESP32-S3!");
+
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(pirPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+
+  Wire.begin(oledsdaPin, oledsclPin);            // start I2C on custom pins
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);     // initialize OLED at I2C address 0x3C
+  display.clearDisplay();                        // clear display buffer
+  display.setTextColor(SSD1306_WHITE);           // set text color
+  display.display();                             // apply initial blank screen
+
+  log_event("System initialised. Monitoring started.");
+}
+
+bool read_pir() {
+  return digitalRead(pirPin) == HIGH;
+}
+
+bool read_button() {
+  return digitalRead(buttonPin) == LOW;          // LOW = pressed (INPUT_PULLUP)
+}
+
+void set_led(bool on) {
+  digitalWrite(ledPin, on ? HIGH : LOW);
+}
+
+void start_buzzer(int duration) {
+  tone(buzzerPin, buzzerHz);                     // passive buzzer — needs a driven frequency
+  buzzerActive = true;
+  buzzerStartTime = millis();
+  buzzerDuration = duration;
+}
+
+void update_buzzer() {
+  if (buzzerActive && millis() - buzzerStartTime >= buzzerDuration) {
+    noTone(buzzerPin);
+    buzzerActive = false;
+  }
+}
+
+void update_display(String status) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println(status);
+  display.display();
+}
+
+void log_event(String message) {
+  Serial.print("[LOG] ");
+  Serial.println(message);
+}
+
+void loop() {
+  bool motionDetected = read_pir();
+  bool buttonPressed = read_button();
+
+  bool motionRisingEdge = motionDetected && !lastMotionState;
+  bool buttonRisingEdge = buttonPressed && !lastButtonState;
+
+  String currentStatus;
+
+  if (motionDetected) {
+    set_led(true);
+    currentStatus = "ALERT: Motion";
+  } else if (buttonPressed) {
+    set_led(true);
+    currentStatus = "ALERT: Button";
+  } else {
+    set_led(false);
+    currentStatus = "System OK";
+  }
+
+  // boolean OR: sia il PIR che il bottone possono far partire un nuovo allarme
+  if ((motionRisingEdge || buttonRisingEdge) && !buzzerActive) {
+    start_buzzer(motionDetected ? 1000 : 1000);
+    log_event(currentStatus);
+  }
+
+  if (currentStatus != previousStatus) {
+    update_display(currentStatus);
+    previousStatus = currentStatus;
+  }
+
+  update_buzzer();
+
+  lastMotionState = motionDetected;
+  lastButtonState = buttonPressed;
+}
+```
+>
+> Wokwi Link :https://wokwi.com/projects/473184598209260545
+>
+
 ### Questions
 
 - Why must `update_buzzer()` run on every pass of `loop()`, rather than only inside the `if` block that starts the buzzer?
   ```
-
-
+  update_buzzer() checks whether buzzerDuration has already elapsed since the buzzer started, and turns it off with noTone() once it has. If it were called only inside the block that starts the buzzer, it would run at the exact same instant buzzerActive becomes true — so it would check "is it time to turn off yet?" a moment after switching on, and never again. The buzzer, once started, would stay on forever because nothing would ever re-check the elapsed time. Calling it on every pass means that check keeps repeating until it finally becomes true.
   ```
 
 - What would happen to the PIR and button readings if `update_buzzer()`'s timing check used `delay()` instead of comparing against `millis()`?
   ```
-
-
+  delay() freezes the entire program for the given duration: no line of code runs, including digitalRead(pirPin) or digitalRead(buttonPin). Any motion or button press that happens while the microcontroller is stuck inside delay() would be completely missed. With millis(), loop() keeps running normally and the sensors are read on every pass, even while the buzzer is sounding.
   ```
 
 - Why does `buzzerStartTime` need to be `unsigned long` instead of `int` or a signed `long`?
   ```
-
-
+  millis() returns an unsigned long, so buzzerStartTime needs to match that type to be compared correctly. An int only goes up to about 2.1 billion (and then turns negative), while millis() exceeds that after roughly 24 days of continuous running. At that point the value would no longer fit correctly into a signed type, and the comparison millis() - buzzerStartTime >= buzzerDuration would give wrong or negative results, making the buzzer's behaviour unpredictable.
   ```
 
 - In `if (motionDetected || buttonPressed)`, what happens on a pass where both are `true` at once?
   ```
-
-
+  With ||, only one side needs to be true for the whole expression to be true — so if both are true at the same time, the condition is still just true once, and the block runs normally, not twice. In the if / else if structure that assigns the status ("ALERT: Motion" / "ALERT: Button"), motionDetected is checked first: so if both are true, the motion branch wins, because the else if for the button is never even evaluated once the first if has already come back true.
   ```
 
 - Why is it useful for `read_pir()` to return `bool` rather than calling `digitalRead()` directly inside `loop()`?
   ```
-
-
+  Returning bool makes the variable name (motionDetected) immediately clear, without having to remember every time whether HIGH means "motion detected" or the opposite — that detail stays hidden inside read_pir(), handled in one place. If the sensor were ever swapped for one with inverted logic, only read_pir() would need to change, not loop(). The code also reads better: if (motionDetected) reads like a sentence, while if (digitalRead(pirPin) == HIGH) requires remembering the hardware detail every time it's read.
   ```
 
 - Why does `update_display()` only get called when the status text changes, rather than on every pass of `loop()` like `update_buzzer()` does?
   ```
-
-
+  The two functions do different kinds of work. update_buzzer() performs a time check that needs to be re-evaluated continuously, even when "nothing new" is happening. update_display(), on the other hand, physically redraws the OLED over I2C — a slower operation relative to how fast loop() runs. Calling it on every pass would redraw the exact same text dozens or hundreds of times a second, wasting time and I2C bandwidth for no visible benefit, since the human eye wouldn't notice those repeated redraws anyway. By comparing currentStatus to previousStatus, the display only updates at the actual moment the text changes.
   ```
 
 ### Spot-the-Bug Worksheet
