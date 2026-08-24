@@ -142,9 +142,62 @@ Write `read_pir()` and `read_button()` as functions returning `bool`. In `loop()
 
 **Task 2**
 ```cpp
+/*
+=== Task 2 - PIR/Button Priority Alert Using Selection ===
+            Author: Roberto Palozzo
+==========================================================
+*/
 
+constexpr uint8_t pirPin    = 3;
+constexpr uint8_t buttonPin = 2;
+constexpr uint8_t ledPin    = 13;
+
+unsigned long previousMillis = 0;   // remembers when the status was last printed
+const long reportInterval = 500;    // print status at most every 500 ms
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(pirPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+}
+
+bool read_pir() {
+  return digitalRead(pirPin) == HIGH;
+}
+
+bool read_button() {
+  return digitalRead(buttonPin) == LOW;   // LOW = pressed (INPUT_PULLUP)
+}
+
+void loop() {
+  bool motionDetected = read_pir();
+  bool buttonPressed  = read_button();
+
+  String status;
+
+  if (motionDetected) {
+    digitalWrite(ledPin, HIGH);
+    status = "Motion";
+  } else if (buttonPressed) {
+    digitalWrite(ledPin, HIGH);
+    status = "Button";
+  } else {
+    digitalWrite(ledPin, LOW);
+    status = "Idle";
+  }
+
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= reportInterval) {
+    previousMillis = currentMillis;
+    Serial.println(status);
+  }
+}
 ```
-
+>
+> Wokwi link: https://wokwi.com/projects/473098527098271745
+>
 ---
 
 ## Task 3 - Boolean AND — After-Hours Motion Alarm
@@ -190,7 +243,65 @@ Declare `bool afterHours` near the top of the program, starting at `false`. Rath
 - [ ] The buzzer fires a single 1000 ms pulse when both conditions become true, using `millis()` — not `delay()`
 - [ ] `buzzerStartTime` is recorded the moment the buzzer turns on, and is declared `unsigned long`
 - [ ] The buzzer doesn't start a new pulse on top of one that's already running
+```cpp
+/*
+=== Task 3 - Boolean AND — After-Hours Motion Alarm ===
+            Author: Roberto Palozzo
+=======================================================
+*/
 
+constexpr uint8_t pirPin    = 3;
+constexpr uint8_t buttonPin = 2;              // after-hours toggle
+constexpr uint8_t buzzerPin = 8;
+constexpr uint16_t buzzerFrequency = 2000;
+
+const unsigned long buzzerDuration = 1000;    // single pulse length, in ms
+
+bool afterHours = false;                      // starts false, toggled by the button
+bool lastButtonState = false;                 // raw button state from the previous pass, for edge detection
+
+bool buzzerActive = false;
+unsigned long buzzerStartTime = 0;
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(pirPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(buzzerPin, OUTPUT);
+}
+
+bool read_pir() {
+  return digitalRead(pirPin) == HIGH;
+}
+
+void loop() {
+  bool motionDetected = read_pir();
+  bool rawButtonState = digitalRead(buttonPin) == LOW;   // LOW = pressed (INPUT_PULLUP)
+
+  // rising edge: the button just went from not-pressed to pressed -> one flip per press
+  if (rawButtonState && !lastButtonState) {
+    afterHours = !afterHours;
+  }
+  lastButtonState = rawButtonState;
+
+  bool alarmCondition = motionDetected && afterHours;
+
+  if (alarmCondition && !buzzerActive) {
+    tone(buzzerPin, buzzerFrequency);
+    buzzerActive = true;
+    buzzerStartTime = millis();
+  }
+
+  if (buzzerActive && millis() - buzzerStartTime >= buzzerDuration) {
+    noTone(buzzerPin);
+    buzzerActive = false;
+  }
+}
+```
+>
+> Wokwi link: https://wokwi.com/projects/473210812192787457
+>
 ---
 
 ## Task 4 - Boolean OR — Dual-Input Alert
@@ -237,7 +348,58 @@ Read the raw button pin into a `bool rawButtonPressed` at the top of `loop()`. D
 - [ ] The LED turns off only when neither input is active
 - [ ] The button reading is debounced using `millis()` (`lastDebounceTime` as `unsigned long`, `debounceDelay` of 300 ms), not `delay()`
 - [ ] Both sensor readings are stored in named `bool` variables before the `if`, not called twice inside it
+```cpp
+/*
+=== Task 4 - Boolean OR — Dual-Input Alert ===
+          Author: Roberto Palozzo
+==============================================
+*/
 
+constexpr uint8_t buttonPin = 2;
+constexpr uint8_t pirPin    = 3;
+constexpr uint8_t ledPin    = 13;
+
+unsigned long lastDebounceTime = 0;
+const long debounceDelay = 300;
+
+bool lastRawButtonState = false;     // raw reading from the previous pass
+bool debouncedButtonPressed = false; // stable, debounced button reading
+
+void setup() {
+  pinMode(pirPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+}
+
+bool read_pir() {
+  return digitalRead(pirPin) == HIGH;
+}
+
+void loop() {
+  bool rawButtonPressed = digitalRead(buttonPin) == LOW;   // LOW = pressed (INPUT_PULLUP)
+
+  if (rawButtonPressed != lastRawButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if (millis() - lastDebounceTime >= debounceDelay) {
+    debouncedButtonPressed = rawButtonPressed;
+  }
+
+  lastRawButtonState = rawButtonPressed;
+
+  bool motionDetected = read_pir();
+
+  if (motionDetected || debouncedButtonPressed) {
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+}
+```
+>
+> Wokwi link: https://wokwi.com/projects/473213075508055041
+>
 ---
 
 ## Task 5 - Non-blocking Test-Blink Timer
@@ -292,7 +454,64 @@ This needs **two independent `millis()` timers running at once**, not just one: 
 - [ ] Pressing the button again mid-test restarts the 5-second window from zero
 - [ ] All three LEDs flash together in sync on the shared `blinkInterval` timer, independent from the `testDuration` timer bounding the whole test
 - [ ] The test stops automatically once `testDuration` has elapsed, turning all three LEDs off and clearing `testRunning`- [ ] `loop()` contains no `delay()` calls anywhere, and all `millis()`-based timing variables are `unsigned long`
+```cpp
+/*
+=== Task 5 - Non-blocking Test-Blink Timer ===
+          Author: Roberto Palozzo
+==============================================
+*/
 
+constexpr uint8_t ledPins[3] = {9, 10, 11};       // red, green, blue
+constexpr uint8_t buttonPin = 2;
+
+bool testRunning = false;
+bool lastButtonState = false;
+
+unsigned long testStartTime = 0;
+const long testDuration = 5000;                   // ms, whole self-test window
+
+unsigned long previousBlinkMillis = 0;
+const long blinkInterval = 250;                   // ms, LED toggle rate during the test
+
+bool blinkState = false;                          // current on/off state of the three LEDs
+
+void setup() {
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  for (uint8_t i = 0; i < 3; i++) {
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW);
+  }
+}
+
+void loop() {
+  bool rawButtonState = digitalRead(buttonPin) == LOW;   // LOW = pressed (INPUT_PULLUP)
+
+  if (rawButtonState && !lastButtonState) {        // rising edge: fresh press, not held
+    testRunning = true;
+    testStartTime = millis();
+  }
+  lastButtonState = rawButtonState;
+
+  if (testRunning) {
+    if (millis() - testStartTime >= testDuration) {
+      testRunning = false;
+      for (uint8_t i = 0; i < 3; i++) {
+        digitalWrite(ledPins[i], LOW);
+      }
+    } else if (millis() - previousBlinkMillis >= blinkInterval) {
+      previousBlinkMillis = millis();
+      blinkState = !blinkState;
+      for (uint8_t i = 0; i < 3; i++) {
+        digitalWrite(ledPins[i], blinkState ? HIGH : LOW);
+      }
+    }
+  }
+}
+```
+>
+> Wokwi link: https://wokwi.com/projects/473214694208974849
+>
 ---
 
 ## Task 6 - Non-blocking Status Display (OLED)
@@ -338,7 +557,78 @@ Set up the display as in the Week 2 resource notes: `#include <Adafruit_GFX.h>` 
 - [ ] `update_display()` ends with `display.display()`, or nothing appears on screen
 - [ ] The OLED text changes correctly between all three states: OK, motion alert, button alert
 - [ ] The screen redraws immediately when the status changes, and also at least once every `heartbeatInterval` (2000 ms) even while it stays the same, using `millis()` — not on every single pass of `loop()`, and not via `delay()`
+```cpp
+/*
+=== Task 6 - Non-blocking Status Display (OLED) ===
+              Author: Roberto Palozzo
+===================================================
+*/
 
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+constexpr uint8_t pirPin     = 3;
+constexpr uint8_t buttonPin  = 2;
+constexpr uint8_t oledSdaPin = 8;
+constexpr uint8_t oledSclPin = 9;
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+String previousStatus = "";
+unsigned long lastRefresh = 0;
+const long heartbeatInterval = 2000;   // ms
+
+void setup() {
+  pinMode(pirPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+
+  Wire.begin(oledSdaPin, oledSclPin);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+}
+
+bool read_pir() {
+  return digitalRead(pirPin) == HIGH;
+}
+
+bool read_button() {
+  return digitalRead(buttonPin) == LOW;   // LOW = pressed (INPUT_PULLUP)
+}
+
+void update_display(String status) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println(status);
+  display.display();
+}
+
+void loop() {
+  bool motionDetected = read_pir();
+  bool buttonPressed  = read_button();
+
+  String currentStatus;
+
+  if (motionDetected) {
+    currentStatus = "ALERT: Motion";
+  } else if (buttonPressed) {
+    currentStatus = "ALERT: Button";
+  } else {
+    currentStatus = "System OK";
+  }
+
+  if (currentStatus != previousStatus || millis() - lastRefresh >= heartbeatInterval) {
+    update_display(currentStatus);
+    previousStatus = currentStatus;
+    lastRefresh = millis();
+  }
+}
+```
+>
+> Wokwi link: https://wokwi.com/projects/473215895795908609
+>
 ---
 
 ## Task 7  Non-blocking Warehouse Alarm Station
@@ -403,7 +693,121 @@ flowchart LR
 - [ ] All `millis()`-based timing variables are `unsigned long`
 - [ ] The alert triggers from either input using `||`, and the log message correctly names which one fired
 - [ ] The OLED status redraws when it actually changes, and at least every heartbeat interval otherwise
+```cpp
+/*
+=== Task 7 Non-blocking Warehouse Alarm Station ===
+              Author: Roberto Palozzo
+===================================================
+*/
 
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+constexpr uint8_t buttonPin  = 2;
+constexpr uint8_t pirPin     = 4;
+constexpr uint8_t buzzerPin  = 7;
+constexpr uint8_t oledSdaPin = 8;
+constexpr uint8_t oledSclPin = 9;
+constexpr uint8_t ledPin     = 13;
+constexpr uint16_t buzzerFrequency = 2000;
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+bool buzzerActive = false;
+unsigned long buzzerStartTime = 0;
+int buzzerDuration = 0;
+
+String previousStatus = "";
+unsigned long lastRefresh = 0;
+const long heartbeatInterval = 2000;   // ms, as in Task 6
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(pirPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+
+  Wire.begin(oledSdaPin, oledSclPin);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+}
+
+bool read_pir() {
+  return digitalRead(pirPin) == HIGH;
+}
+
+bool read_button() {
+  return digitalRead(buttonPin) == LOW;   // LOW = pressed (INPUT_PULLUP)
+}
+
+void set_led(bool on) {
+  digitalWrite(ledPin, on ? HIGH : LOW);
+}
+
+void start_buzzer(int duration) {
+  tone(buzzerPin, buzzerFrequency);       // passive buzzer — needs a driven frequency
+  buzzerActive = true;
+  buzzerStartTime = millis();
+  buzzerDuration = duration;
+}
+
+void update_buzzer() {
+  if (buzzerActive && millis() - buzzerStartTime >= buzzerDuration) {
+    noTone(buzzerPin);
+    buzzerActive = false;
+  }
+}
+
+void update_display(String status) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println(status);
+  display.display();
+}
+
+void log_event(String message) {
+  Serial.print("[LOG] ");
+  Serial.println(message);
+}
+
+void loop() {
+  bool motionDetected = read_pir();
+  bool buttonPressed  = read_button();
+
+  bool alertActive = motionDetected || buttonPressed;   // boolean OR: either input triggers the alert
+
+  String currentStatus;
+
+  if (alertActive) {
+    set_led(true);
+    currentStatus = motionDetected ? "ALERT: Motion" : "ALERT: Button";
+
+    if (!buzzerActive) {
+      start_buzzer(500);
+      log_event(currentStatus);          // same text passed to update_display()
+    }
+  } else {
+    set_led(false);
+    currentStatus = "System OK";
+  }
+
+  if (currentStatus != previousStatus || millis() - lastRefresh >= heartbeatInterval) {
+    update_display(currentStatus);
+    previousStatus = currentStatus;
+    lastRefresh = millis();
+  }
+
+  update_buzzer();
+}
+```
+>
+> Wokwi link: https://wokwi.com/projects/473222167439131649
+>
 ---
 
 ## Task 8 - Spot-the-Bug Worksheet (Extension)
