@@ -588,6 +588,7 @@ void setup() {
 
   Wire.begin(oledSdaPin, oledSclPin);
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextColor(SSD1306_WHITE);
 }
 
 bool read_pir() {
@@ -735,6 +736,7 @@ void setup() {
 
   Wire.begin(oledSdaPin, oledSclPin);
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextColor(SSD1306_WHITE);
 }
 
 bool read_pir() {
