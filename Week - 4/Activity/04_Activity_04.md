@@ -1010,6 +1010,6 @@ Answer these in your own words before moving on:
 
 6. In Task 6/7, why does `update_display()` need a "previous status" variable to compare against, when `update_buzzer()` doesn't need anything similar?
    ```
-   Principalmente per ottimizzare le prestazioni visive e di calcolo e non rallentare il processore. La comunicazione fisicamente con lo schermo OLED è molto più lenta,e utilizzerebbe risorse per ridisegnare contenuto che non è cambiato.
-Update_buzzer() non richiede questo controllo perché gestisce un'operazione aritmetica leggerissima, che si può ripetere migliaia di volte al secondo senza alcun costo reale.
+   Mainly to optimize visual and computational performance and avoid slowing down the processor. Physical communication with the OLED screen is much slower and would use resources to redraw unchanged content.
+   Update_buzzer() does not require this check because it handles a very light arithmetic operation, which can be repeated thousands of times per second at no real cost.
    ```
