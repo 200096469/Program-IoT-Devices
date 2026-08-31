@@ -65,7 +65,7 @@ flowchart LR
 - Add a fourth "silence" button that immediately stops whatever pattern is currently playing (without disarming any zone).
 
 >
-> Wokwi Link : _(build this circuit at wokwi.com, save the project, and paste your link here)_
+> Wokwi Link : https://wokwi.com/projects/473374044178894849
 
 ### Questions
 

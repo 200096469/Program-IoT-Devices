@@ -830,6 +830,15 @@ void loop() {
     set_led(false);
   }
 }
+
+//Putting everything into one if/else is correct and also cleaner, because both original branches do exactly the same action (set_led(true)).
+//Modified code:
+
+  if (motionDetected || buttonPressed) {
+    set_led(true);
+    }
+  else {
+    set_led(false);
 ```
 <details><summary>Answer</summary>The second branch can never be reached in the way intended — once <code>motionDetected</code> is false (the only way to reach the <code>else if</code>), <code>motionDetected || buttonPressed</code> just collapses to checking <code>buttonPressed</code> alone. The condition should simply be <code>buttonPressed</code>.</details>
 
@@ -847,6 +856,18 @@ void update_buzzer() {
     buzzerActive = false;
   }
 }
+
+// The statement buzzerStartTime = millis(); is missing inside the start_buzzer() function,
+// which should update the global variable unsigned long buzzerStartTime = 0;
+// with the current time. Without this statement, the time is never updated
+// and stays at zero forever.
+
+void start_buzzer(int duration) {
+  tone(buzzerPin, buzzerFrequency);
+  buzzerActive = true;
+  buzzerStartTime = millis();   // <-- missing statement
+  buzzerDuration = duration;
+}
 ```
 <details><summary>Answer</summary><code>start_buzzer()</code> never records <code>buzzerStartTime = millis();</code> — without it, <code>buzzerStartTime</code> stays at its old value (or 0), so <code>update_buzzer()</code>'s timing check is meaningless.</details>
 
@@ -856,6 +877,22 @@ void loop() {
   unsigned long currentMillis = millis();
   unsigned long previousMillis = 0;
   const long interval = 500;
+
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    blink_led();
+  }
+}
+
+// PreviousMillis must be moved out of loop() as a global variable, because being declared inside it,
+// it gets reset to 0 every single time loop() runs — so the 500ms check always evaluates true,
+// and blink_led() fires on every pass instead of only every 500ms.
+
+unsigned long previousMillis = 0; // <-- moved here, outside of loop()
+const long interval = 500;
+
+void loop() {
+  unsigned long currentMillis = millis();
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
@@ -878,6 +915,23 @@ void loop() {
     start_buzzer(500);
   }
 }
+
+// Missing "return false;" in case the PIR sensor reads LOW for when no motion is detected.
+
+bool read_pir() {
+  if (digitalRead(pirPin) == HIGH) {
+    return true;
+  }
+  else {                // Added this line
+    return false;       // And this
+  }
+}
+
+void loop() {
+  if (read_pir()) {
+    start_buzzer(500);
+  }
+}
 ```
 <details><summary>Answer</summary>There's no <code>return false;</code> for the case where the PIR sensor reads <code>LOW</code> — a function declared to return <code>bool</code> that doesn't return on every path gives an unreliable result when no motion is detected.</details>
 
@@ -887,10 +941,12 @@ void loop() {
   bool motionDetected = read_pir();
   bool afterHours = true;
 
-  if (motionDetected | afterHours) {
-    start_buzzer(500);
+  if (motionDetected | afterHours) {  // The OR operator is incorrect. It's |
+    start_buzzer(500);                // instead of || which is correct.
   }
 }
+
+  if (motionDetected || afterHours) {  // This is correct!
 ```
 <details><summary>Answer</summary><code>|</code> is the bitwise OR operator, not the logical OR. It happens to evaluate correctly here because both sides are already <code>bool</code>, but it's the wrong tool and can silently misbehave with non-boolean values — it should be <code>||</code>.</details>
 
@@ -912,6 +968,9 @@ void update_display(String status) {
   display.println(status);
   display.display();
 }
+
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // These two commands are missing 
+  display.setTextColor(SSD1306_WHITE);       // from void setup()
 ```
 <details><summary>Answer</summary><code>setup()</code> never calls <code>display.begin(SSD1306_SWITCHCAPVCC, 0x3C)</code> — without initialising the SSD1306 driver chip first, the display object isn't ready to receive commands, so <code>update_display()</code> will have no visible effect (or the sketch may hang/crash on some boards).</details>
 
@@ -924,36 +983,33 @@ Answer these in your own words before moving on:
 
 1. Why does splitting sensor reads and actions into functions (`read_pir()`, `start_buzzer()`, etc.) make a multi-sensor program easier to extend later?
    ```
-
-
+   If you need to change the code of a function in the future, the change is isolated to the function alone and is easier to manage.
    ```
 
 2. In Task 2, what would happen if `else if (buttonPressed)` were changed to a separate `if (buttonPressed)` instead? Would the priority behaviour still hold?
    ```
-
-
+   In the first case, the LED remains on if motionDetected is true and whether the button is pressed or not.
+   If they are separated into two if statements, if motion is detected, the LED is turned on by the first if statement. If the button is pressed, the LED remains on.
+   But if the button is not pressed, the LED that was turned on by the detected motion is overwritten by the else statement and consequently turns off and enters the Idle state.
    ```
 
 3. Why does `&&` (Task 3) only need one side to be false to stop the alert, while `||` (Task 4) needs both sides to be false?
    ```
-
-
+   With &&, only one of the two conditions needs to be false to stop the alarm: if the PIR detects motion but it's not yet after-hours—for example, because workers are still at work—the alarm will still remain inactive, because && requires both conditions to be true at the same time. With ||, however, only one condition needs to be true to trigger the alarm: if there's motion but the button isn't pressed, the LED will still light up, and the same thing happens in reverse, if the button is pressed and no motion is detected. Therefore, to stop the alarm with ||, both conditions would need to be false at the same time.
    ```
 
 4. In Task 3/7, what specifically would break if `start_buzzer()`/`update_buzzer()` were replaced with a single call to `activate_buzzer()` that used `delay(duration)` instead?
    ```
-
-
+   If start_buzzer()/update_buzzer() were replaced by a single activate_buzzer() with delay(duration), the program would completely halt for the duration of the buzzer. In Task 3, this would mean that neither the PIR nor the after-hours button could be detected for that period—a button press during that window would be lost. In Task 7, the problem would be even more widespread, as the PIR, button, LED, OLED display update, and log recording would all crash together: the entire system would be 'deaf and blind' for the duration of the buzzer, exactly the non-blocking behavior that millis() was designed to avoid.
    ```
 
 5. Why must every variable that stores a `millis()` timestamp be declared `unsigned long`, and what could go wrong if one were declared as a signed `int` instead?
    ```
-
-
+   Declaring the variable as an int causes a negative overflow. The sign bit will cause the number to become negative as soon as the maximum limit is exceeded. This completely breaks any subtraction-based timing logic (e.g., millis() - previousTime), causing timers in your code to crash or malfunction.
    ```
 
 6. In Task 6/7, why does `update_display()` need a "previous status" variable to compare against, when `update_buzzer()` doesn't need anything similar?
    ```
-
-
+   Principalmente per ottimizzare le prestazioni visive e di calcolo e non rallentare il processore. La comunicazione fisicamente con lo schermo OLED è molto più lenta,e utilizzerebbe risorse per ridisegnare contenuto che non è cambiato.
+Update_buzzer() non richiede questo controllo perché gestisce un'operazione aritmetica leggerissima, che si può ripetere migliaia di volte al secondo senza alcun costo reale.
    ```
