@@ -989,27 +989,42 @@ Answer these in your own words before moving on:
 2. In Task 2, what would happen if `else if (buttonPressed)` were changed to a separate `if (buttonPressed)` instead? Would the priority behaviour still hold?
    ```
    In the first case, the LED remains on if motionDetected is true and whether the button is pressed or not.
-   If they are separated into two if statements, if motion is detected, the LED is turned on by the first if statement. If the button is pressed, the LED remains on.
-   But if the button is not pressed, the LED that was turned on by the detected motion is overwritten by the else statement and consequently turns off and enters the Idle state.
+   If they are separated into two if statements, if motion is detected, the LED is turned on by the first if statement.
+   If the button is pressed, the LED remains on. But if the button is not pressed, the LED that was turned on by the
+   detected motion is overwritten by the else statement and consequently turns off and enters the Idle state.
    ```
 
 3. Why does `&&` (Task 3) only need one side to be false to stop the alert, while `||` (Task 4) needs both sides to be false?
    ```
-   With &&, only one of the two conditions needs to be false to stop the alarm: if the PIR detects motion but it's not yet after-hours—for example, because workers are still at work—the alarm will still remain inactive, because && requires both conditions to be true at the same time. With ||, however, only one condition needs to be true to trigger the alarm: if there's motion but the button isn't pressed, the LED will still light up, and the same thing happens in reverse, if the button is pressed and no motion is detected. Therefore, to stop the alarm with ||, both conditions would need to be false at the same time.
+   With &&, only one of the two conditions needs to be false to stop the alarm: if the PIR detects motion but
+   it's not yet after-hours—for example, because workers are still at work—the alarm will still remain inactive,
+   because && requires both conditions to be true at the same time. With ||, however, only one condition needs
+   to be true to trigger the alarm: if there's motion but the button isn't pressed, the LED will still light up,
+   and the same thing happens in reverse, if the button is pressed and no motion is detected. Therefore, to stop
+   the alarm with ||, both conditions would need to be false at the same time.
    ```
 
 4. In Task 3/7, what specifically would break if `start_buzzer()`/`update_buzzer()` were replaced with a single call to `activate_buzzer()` that used `delay(duration)` instead?
    ```
-   If start_buzzer()/update_buzzer() were replaced by a single activate_buzzer() with delay(duration), the program would completely halt for the duration of the buzzer. In Task 3, this would mean that neither the PIR nor the after-hours button could be detected for that period—a button press during that window would be lost. In Task 7, the problem would be even more widespread, as the PIR, button, LED, OLED display update, and log recording would all crash together: the entire system would be 'deaf and blind' for the duration of the buzzer, exactly the non-blocking behavior that millis() was designed to avoid.
+   If start_buzzer()/update_buzzer() were replaced by a single activate_buzzer() with delay(duration), the program
+   would completely halt for the duration of the buzzer. In Task 3, this would mean that neither the PIR nor the
+   after-hours button could be detected for that period—a button press during that window would be lost. In Task 7,
+   the problem would be even more widespread, as the PIR, button, LED, OLED display update, and log recording would
+   all crash together: the entire system would be 'deaf and blind' for the duration of the buzzer, exactly the
+   non-blocking behavior that millis() was designed to avoid.
    ```
 
 5. Why must every variable that stores a `millis()` timestamp be declared `unsigned long`, and what could go wrong if one were declared as a signed `int` instead?
    ```
-   Declaring the variable as an int causes a negative overflow. The sign bit will cause the number to become negative as soon as the maximum limit is exceeded. This completely breaks any subtraction-based timing logic (e.g., millis() - previousTime), causing timers in your code to crash or malfunction.
+   Declaring the variable as an int causes a negative overflow. The sign bit will cause the number to become negative
+   as soon as the maximum limit is exceeded. This completely breaks any subtraction-based timing logic
+   (e.g., millis() - previousTime), causing timers in your code to crash or malfunction.
    ```
 
 6. In Task 6/7, why does `update_display()` need a "previous status" variable to compare against, when `update_buzzer()` doesn't need anything similar?
    ```
-   Mainly to optimize visual and computational performance and avoid slowing down the processor. Physical communication with the OLED screen is much slower and would use resources to redraw unchanged content.
-   Update_buzzer() does not require this check because it handles a very light arithmetic operation, which can be repeated thousands of times per second at no real cost.
+   Mainly to optimize visual and computational performance and avoid slowing down the processor.
+   Physical communication with the OLED screen is much slower and would use resources to redraw unchanged content.
+   Update_buzzer() does not require this check because it handles a very light arithmetic operation,
+   which can be repeated thousands of times per second at no real cost.
    ```
