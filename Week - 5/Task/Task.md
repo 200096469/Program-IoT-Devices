@@ -64,8 +64,8 @@ flowchart LR
 - Add `int triggerCount[NUM_ZONES]`, incremented every time that zone's pattern is triggered, and print the full array whenever it changes.
 - Add a fourth "silence" button that immediately stops whatever pattern is currently playing (without disarming any zone).
 
->
-> Wokwi Link : https://wokwi.com/projects/473374044178894849
+**Task - Lists, Arrays & Loops**  
+Wokwi Link : https://wokwi.com/projects/473374044178894849
 
 ### Questions
 

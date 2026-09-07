@@ -46,7 +46,7 @@ Write a function `blink_led(int pin, int times, int onTime)` that blinks the LED
 **Check yourself:**
 - [ ] `blink_led()` takes a pin, a count, and a timing parameter — nothing about which LED or its speed is hard-coded inside the function
 - [ ] `loop()` only calls `blink_led()`; it contains no raw `digitalWrite`/`delay` of its own
-- [ ] The red, green, and blue LEDs are all driven by the same function, and each one visibly blinks at a different speed from the other two
+- [ ] The red, green, and blue LEDs are all driven by the same function, and each one visibly blinks at a different speed from the other two.
 
 **Task 1**
 ```cpp
