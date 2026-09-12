@@ -51,6 +51,50 @@ Define `struct Step { int pin; int duration; };` and declare `Step sequence[4] =
 - [ ] `run_sequence()` reads each step's own duration via `.duration` — steps are not all the same length
 - [ ] `setup()` configures pins with a `for` loop over `sequence`, not hard-coded `pinMode()` calls
 
+**Task 1**
+```cpp
+/*
+=== Task 1 - LED Chaser Using an Array and a For Loop ===
+           Author: Roberto Palozzo
+=========================================================
+*/
+
+struct Step {
+  int pin;
+  int duration;
+};
+
+// Pin dei LED e durata in ms dell'accensione
+const int NUM_STEPS = 4;
+const Step sequence[NUM_STEPS] = {
+  {4,100},
+  {5,200},
+  {6,100},
+  {7,400},
+};
+
+void setup() {  
+  for (int i = 0; i < NUM_STEPS; i++) {
+    pinMode(sequence[i].pin, OUTPUT);
+    digitalWrite(sequence[i].pin, LOW);
+  }
+}
+
+void run_sequence() {
+  for (int i = 0; i < NUM_STEPS; i++) {
+    digitalWrite(sequence[i].pin, HIGH);
+    delay(sequence[i].duration);
+    digitalWrite(sequence[i].pin, LOW);
+    delay(sequence[i].duration);
+  }
+}
+
+void loop() {
+  run_sequence();
+}
+```
+Wokwi link: https://wokwi.com/projects/474485454691075073
+
 ---
 
 ## Task 2 - Logging DHT22 Readings as an Array of `Reading` Structs
