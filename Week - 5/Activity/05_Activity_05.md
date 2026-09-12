@@ -51,8 +51,51 @@ Declare `const int ledPins[4] = {4, 5, 6, 7};` and `const unsigned long STEP_INT
 - [ ] Reaching either end of `ledPins[]` reverses `direction`, so the chaser bounces back and forth instead of restarting from index 0
 - [ ] No pin number is hard-coded anywhere outside `ledPins[]`
 
+**Task 1**
+```cpp
+/*
+=== Task 1 - LED Chaser Using an Array and a For Loop ===
+           Author: Roberto Palozzo
+=========================================================
+*/
 
+// ---------- Pin delle zone (paralleli, stesso indice i) ----------
+constexpr uint8_t LED_PINS[4]    = {4, 5, 6, 7};   // LED nell'array
+const unsigned long STEP_INTERVAL = 150;
+unsigned long previousStepMillis = 0;
 
+void setup() {  
+  for (int i = 0; i < 4; i++) {
+    pinMode(LED_PINS[i], OUTPUT);
+    digitalWrite(LED_PINS[i], LOW);
+  }
+}
+
+void led_chaser() {
+  static int currentIndex = 0;
+  static int direction =1;
+
+  if (millis() - previousStepMillis >= STEP_INTERVAL) {
+    digitalWrite(LED_PINS[currentIndex], LOW);   // spegne il LED attuale
+
+    if (currentIndex + direction < 0 || currentIndex + direction > 3) {
+      direction = -direction;
+    }
+    currentIndex += direction;
+
+    digitalWrite(LED_PINS[currentIndex], HIGH);  // accende il nuovo LED
+
+    previousStepMillis = millis();
+  }
+}
+
+void loop() {
+  led_chaser();
+}
+```
+Wokwi link: https://wokwi.com/projects/473854001390447617
+
+---
 ## Task 2 - Burst-Sampling a Button Panel
 
 **Scenario:**
@@ -86,7 +129,70 @@ Declare `const int buttonPins[3] = {12, 13, 14};` and `const int MAX_READINGS = 
 >
 > Wokwi link: https://wokwi.com/projects/473651805811447809
 
+**Task 2**
+```cpp
+/*
+=== Task 2 - Burst-Sampling a Button Panel ===
+           Author: Roberto Palozzo
+==============================================
+*/
 
+constexpr uint8_t buttonPins[3] {12, 13, 14};   // GPIO pins for the three buttons
+constexpr uint8_t MAX_READINGS = 10;            // How many samples to take per button, per burst
+const int NUM_BUTTONS = 3;                      // How many buttons are in buttonPins[]
+
+int readings[MAX_READINGS];                     // Reusable buffer: holds the burst readings for one button at a time
+int reading_count = 0;                          // How many of the 10 slots in readings[] are actually filled right now
+
+void setup() {
+  Serial.begin(9600);
+
+  // Configure every button pin with the internal pull-up resistor
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+  }
+}
+
+void capture_all_buttons() {
+
+  // Outer loop: walk through each button in turn
+  for (int b = 0; b < NUM_BUTTONS; b++) {
+    reading_count = 0;                          // Reset the counter — we're about to fill readings[] for a new button
+
+    // Inner loop: burst-sample the current button MAX_READINGS times, 5ms apart
+    for (int i = 0; i < MAX_READINGS; i++) {
+      // LOW means pressed, HIGH means released (INPUT_PULLUP)
+      readings[reading_count] = digitalRead(buttonPins[b]);
+
+      reading_count++;
+      delay(5);
+    }
+
+    // Print a header identifying which button and pin this burst belongs to
+    Serial.print("Button ");
+    Serial.print(b + 1);
+    Serial.print(" on GPIO ");
+    Serial.print(buttonPins[b]);
+    Serial.print(": ");
+
+    // Print only the samples actually captured (reading_count), not the full array capacity
+    for (int i = 0; i < reading_count; i++) {
+      Serial.print(readings[i]);
+      Serial.print(" ");
+    }
+
+    Serial.println();
+  }
+}
+
+void loop() {
+  capture_all_buttons();
+  delay(2000);
+}
+```
+Wokwi link: https://wokwi.com/projects/474025336170863617
+
+---
 ## Task 3 - Debouncing a Single Button, Properly
 
 **Scenario:**
@@ -125,7 +231,61 @@ Track three pieces of state: `int lastButtonReading` (the raw `digitalRead()` fr
 - [ ] `debounceStart` is reset every time the *raw* reading changes, not every pass
 - [ ] The LED only toggles once the reading has stayed stable for `DEBOUNCE_TIME`, and only on a genuine change of `buttonState`
 - [ ] `millis()` is used for all timing; there is no `delay()` anywhere in `loop()`
-- [ ] Pressing and releasing the button quickly toggles the LED cleanly once per press, with no flicker
+- [ ] Pressing and releasing the button quickly toggles the LED cleanly once per press, with no flicker.
+
+**Task 3**
+```cpp
+/*
+=== Task 3 - Debouncing a Single Button, Properly ===
+               Author: Roberto Palozzo
+=====================================================
+*/
+
+constexpr uint8_t buttonPin = 4;
+constexpr uint8_t ledPin = 5;
+
+const unsigned long DEBOUNCE_TIME = 50;
+
+int lastButtonReading = HIGH;
+int buttonState = HIGH;
+
+unsigned long debounceStart = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+}
+
+void loop() {
+  int reading = digitalRead(buttonPin);
+
+  if (reading != lastButtonReading){
+    debounceStart = millis();
+  }
+
+  if (millis() - debounceStart >= DEBOUNCE_TIME) {
+    
+    if (reading != buttonState) {
+        buttonState = reading;
+      
+      if (buttonState == LOW) {
+          digitalWrite(ledPin, HIGH);
+          Serial.println("led ON");
+      }
+
+      else {
+        digitalWrite(ledPin, LOW);
+        Serial.println("led OFF");
+      }
+    }
+  }
+
+  lastButtonReading = reading;
+}
+```
+Wokwi link: https://wokwi.com/projects/474198442818673665
 
 ---
 
@@ -182,6 +342,101 @@ Declare parallel arrays `const int buttonPins[3] = {12, 13, 14};` and `const int
 - [ ] Debouncing one pair never delays or blocks debouncing the others
 - [ ] No `delay()` anywhere; the cycle gate uses `millis()` and `CYCLE_INTERVAL`
 
+**Task 4**
+```cpp
+/*
+=== Task 4 - Parallel Arrays: Debounced Button/LED Pairs, Non-Blocking Cycles ===
+                              Author: Roberto Palozzo
+=================================================================================
+*/
+
+constexpr uint8_t buttonPins[3] {12, 13, 14};            // GPIO pins for the three buttons
+constexpr uint8_t ledPins[3] = {4, 5, 6};                // GPIO pins for the three matching LEDs
+constexpr int NUM_PAIRS = 3;                             // Number of button/LED pairs
+constexpr unsigned long CYCLE_INTERVAL = 1000;           // How often (ms) to print a status report
+constexpr unsigned long DEBOUNCE_TIME = 50;              // How long (ms) a reading must stay stable to count as real
+
+int lastButtonReading[NUM_PAIRS] = {HIGH, HIGH, HIGH};   // Last raw reading seen for each pair (unfiltered)
+int buttonState[NUM_PAIRS] = {HIGH, HIGH, HIGH};         // Debounced, stable state for each pair
+int currentCycle = 0;                                    // Counts how many status reports have been printed
+unsigned long previousCycleMillis = 0;                   // When the last status report was printed
+unsigned long debounceStart[NUM_PAIRS];                  // When each pair's raw reading last changed (auto-init to 0)
+
+void setup() {
+  Serial.begin(115200);
+  for (int i = 0; i < NUM_PAIRS; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+    pinMode(ledPins[i], OUTPUT);
+    digitalWrite(ledPins[i], LOW);                       // Make sure every LED starts off
+  }
+}
+
+// Runs on every pass of loop(): debounces all 3 pairs independently, no delay() involved
+void check_buttons() {
+
+  unsigned long currentMillis = millis();
+
+  for (int button = 0; button < NUM_PAIRS; button++) {
+    int reading = digitalRead(buttonPins[button]);
+
+    // Raw reading changed: restart this pair's debounce timer
+    if (reading != lastButtonReading[button]) {
+      debounceStart[button] = currentMillis;
+    }
+
+    // Reading has stayed stable long enough to trust it
+    if (currentMillis - debounceStart[button]
+        >= DEBOUNCE_TIME) {
+
+      // Only act if the stable state actually changed
+      if (reading != buttonState[button]) {
+        buttonState[button] = reading;
+
+        // INPUT_PULLUP means a pressed button reads LOW
+        if (buttonState[button] == LOW) {
+          Serial.print("Button selected: ");
+          Serial.println(button + 1);
+          digitalWrite(ledPins[button], HIGH);
+        }
+        else {
+          digitalWrite(ledPins[button], LOW);
+        }
+      }
+    }
+
+    lastButtonReading[button] = reading;                 // Save this pass's raw reading for next time
+  }
+}
+
+// Runs once per second (CYCLE_INTERVAL): reports the already-debounced state, doesn't re-read the pins
+void report_cycle() {
+
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - previousCycleMillis >= CYCLE_INTERVAL) {
+    previousCycleMillis = currentMillis;
+
+    Serial.print("Cycle ");
+    Serial.print(currentCycle);
+    Serial.print(": ");
+
+    for (int button = 0; button < NUM_PAIRS; button++) {
+      Serial.print(buttonState[button]);
+      Serial.print(" ");
+    }
+    Serial.println();
+
+    currentCycle++;
+  }
+}
+
+void loop() {
+  check_buttons();
+  report_cycle();
+}
+```
+Wokwi link: https://wokwi.com/projects/474219655371849729
+
 ---
 
 ## Task 5 - Arrays: A Two-Song Melody Selector
@@ -224,6 +479,99 @@ Declare `const int NUM_SONGS = 2;` and `const int NUM_NOTES = 8;`, then `int mel
 - [ ] Note timing uses `millis()`, not `delay()` — both buttons are still readable while a song plays
 - [ ] Pressing the other button mid-song correctly switches to the new song
 
+**Task 5**
+```cpp
+/*
+=== Task 5 - Arrays: A Two-Song Melody Selector ===
+            Author: Roberto Palozzo
+===================================================
+*/
+
+const int buttonPins[2] = {12, 13};      // GPIO pins for the two song-select buttons
+const int buzzerPin = 7;                 // GPIO pin for the passive buzzer
+const int NUM_SONGS = 2;                 // How many songs are stored
+const int NUM_NOTES = 8;                 // How many notes each song has
+const int NOTE_C4 = 262, NOTE_D4 = 294, NOTE_E4 = 330, NOTE_G4 = 392;  // Named note frequencies
+const int NUM_BUTTONS = 2;               // How many buttons are in buttonPins[]
+
+// Each row holds one song's 8 note frequencies; row index = song number
+int melodies[NUM_SONGS][NUM_NOTES] = {
+  {NOTE_C4, NOTE_C4, NOTE_G4, NOTE_G4, NOTE_C4, NOTE_C4, NOTE_G4, NOTE_G4},
+  {NOTE_E4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_E4, NOTE_E4, NOTE_E4, 0}
+};
+
+// Each row holds how long (ms) each corresponding note in melodies[] should play
+int noteDurations[NUM_SONGS][NUM_NOTES] = {
+  {300, 300, 300, 300, 300, 300, 300, 300},
+  {300, 300, 300, 300, 300, 300, 300, 300}
+};
+
+int currentSong = 0;                     // Which song is currently selected/playing
+int currentNote = 0;                     // Which note of that song is currently playing
+bool songPlaying = false;                // Whether a song is currently in progress
+unsigned long noteStartTime = 0;         // When the current note started, for millis()-based timing
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(buzzerPin, OUTPUT);
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+  }
+}
+
+// Begins playing the given song from its first note
+void startSong(int song) {
+  currentSong = song;
+  currentNote = 0;
+  songPlaying = true;
+
+  int frequency = melodies[currentSong][currentNote];
+  tone(buzzerPin, frequency);
+
+  noteStartTime = millis();   // Record when this first note started
+}
+
+// Runs on every pass of loop(): advances to the next note once the current one's duration has elapsed
+void updateSong() {
+
+  // Nothing to do if no song is playing
+  if (!songPlaying) {
+    return;
+  }
+
+  unsigned long currentMillis = millis();
+
+  // Has the current note played for its full duration?
+  if (currentMillis - noteStartTime >= noteDurations[currentSong][currentNote]) {
+    noTone(buzzerPin);
+    currentNote++;
+
+    if (currentNote >= NUM_NOTES) {
+      songPlaying = false;    // No more notes left: the song has finished
+    }
+    else {
+      // Still notes left: start the next one
+      int frequency = melodies[currentSong][currentNote];
+      tone(buzzerPin, frequency);
+      noteStartTime = millis();
+    }
+  }
+}
+
+void loop() {
+  // Direct digitalRead() check on each button
+  if (digitalRead(buttonPins[0]) == LOW) {
+    startSong(0);
+  }
+  if (digitalRead(buttonPins[1]) == LOW) {
+    startSong(1);
+  }
+
+  updateSong();   // Always runs, so playback keeps advancing without blocking the buttons
+}
+```
+Wokwi link: https://wokwi.com/projects/474317257879396353
+
 ---
 
 ## Task 6 - Combine: Debounced Two-Song Melody Selector
@@ -261,6 +609,126 @@ Add `int lastButtonReading[2]`, `unsigned long debounceStart[2]`, and `int butto
 - [ ] The melody playback logic from Task 5 (note timing via `millis()`) is unchanged
 - [ ] Rapidly pressing a button doesn't restart or glitch the song mid-press
 
+**Task 6**
+```cpp
+/*
+=== Task 6 - Combine: Debounced Two-Song Melody Selector ===
+                  Author: Roberto Palozzo
+============================================================
+*/
+
+constexpr uint8_t buttonPins[2] = {12, 13};         // GPIO pins for the two song-select buttons
+constexpr uint8_t buzzerPin = 7;                    // GPIO pin for the passive buzzer
+constexpr int NUM_SONGS = 2;                        // How many songs are stored
+constexpr int NUM_NOTES = 8;                        // How many notes each song has
+constexpr int NOTE_C4 = 262, NOTE_D4 = 294, NOTE_E4 = 330, NOTE_G4 = 392;  // Named note frequencies
+constexpr int NUM_BUTTONS = 2;                      // How many buttons are in buttonPins[]
+constexpr unsigned long DEBOUNCE_TIME = 50;         // How long (ms) a reading must stay stable to count as real
+
+// Each row holds one song's 8 note frequencies; row index = song number
+int melodies[NUM_SONGS][NUM_NOTES] = {
+  {NOTE_C4, NOTE_C4, NOTE_G4, NOTE_G4, NOTE_C4, NOTE_C4, NOTE_G4, NOTE_G4},
+  {NOTE_E4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_E4, NOTE_E4, NOTE_E4, 0}
+};
+
+// Each row holds how long (ms) each corresponding note in melodies[] should play
+int noteDurations[NUM_SONGS][NUM_NOTES] = {
+  {300, 300, 300, 300, 300, 300, 300, 300},
+  {300, 300, 300, 300, 300, 300, 300, 300}
+};
+
+int currentSong = 0;                                // Which song is currently selected/playing
+int currentNote = 0;                                // Which note of that song is currently playing
+int lastButtonReading[NUM_BUTTONS] = {HIGH, HIGH};  // Last raw reading seen for each button (unfiltered)
+int buttonState[NUM_BUTTONS] = {HIGH, HIGH};        // Debounced, stable state for each button
+bool songPlaying = false;                           // Whether a song is currently in progress
+unsigned long noteStartTime = 0;                    // When the current note started, for millis()-based timing
+unsigned long debounceStart[2];                     // When each button's raw reading last changed (auto-init to 0)
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(buzzerPin, OUTPUT);
+  for (int i = 0; i < NUM_BUTTONS; i++) {
+    pinMode(buttonPins[i], INPUT_PULLUP);
+  }
+}
+
+// Runs on every pass of loop(): debounces both buttons independently
+void check_buttons() {
+  unsigned long currentMillis = millis();
+
+  for (int btn = 0; btn < NUM_BUTTONS; btn++) {
+    int reading = digitalRead(buttonPins[btn]);
+
+    // Raw reading changed: restart this button's debounce timer
+    if (reading != lastButtonReading[btn]) {
+      debounceStart[btn] = currentMillis;
+    }
+
+    // Reading has stayed stable long enough to trust it
+    if (currentMillis - debounceStart[btn]
+        >= DEBOUNCE_TIME) {
+
+      // Only act if the stable state actually changed
+      if (reading != buttonState[btn]) {
+        buttonState[btn] = reading;
+
+        // INPUT_PULLUP means a pressed button reads LOW: start that song on the press edge only
+        if (buttonState[btn] == LOW) {
+          startSong(btn);
+        }
+      }
+    }
+
+    lastButtonReading[btn] = reading;               // Save this pass's raw reading for next time
+  }
+}
+
+// Begins playing the given song from its first note
+void startSong(int song) {
+  currentSong = song;
+  currentNote = 0;
+  songPlaying = true;
+
+  int frequency = melodies[currentSong][currentNote];
+  tone(buzzerPin, frequency);
+
+  noteStartTime = millis();                         // Record when this first note started
+}
+
+// Runs on every pass of loop(): advances to the next note once the current one's duration has elapsed
+void updateSong() {
+  // Nothing to do if no song is playing
+  if (!songPlaying) {
+    return;
+  }
+
+  unsigned long currentMillis = millis();
+
+  // Has the current note played for its full duration?
+  if (currentMillis - noteStartTime >= noteDurations[currentSong][currentNote]) {
+    noTone(buzzerPin);
+    currentNote++;
+
+    if (currentNote >= NUM_NOTES) {
+      songPlaying = false;                          // No more notes left: the song has finished
+    }
+    else {
+      // Still notes left: start the next one
+      int frequency = melodies[currentSong][currentNote];
+      tone(buzzerPin, frequency);
+      noteStartTime = millis();
+    }
+  }
+}
+
+void loop() {
+  check_buttons();
+  updateSong();                                     // Always runs, so playback keeps advancing without blocking the buttons
+}
+```
+Wokwi link: https://wokwi.com/projects/474410440249458689
+
 ---
 
 
@@ -273,7 +741,8 @@ const int MAX_READINGS = 10;
 int readings[MAX_READINGS];
 
 void capture_burst() {
-  for (int i = 0; i <= MAX_READINGS; i++) {
+  for (int i = 0; i <= MAX_READINGS; i++) { // i must stay < MAX_READINGS, since valid indices only go up to MAX_READINGS - 1
+  // for (int i = 0; i < MAX_READINGS; i++) This is correct
     readings[i] = digitalRead(buttonPin);
     delay(5);
   }
@@ -289,6 +758,7 @@ int readings[10];
 void capture_burst() {
   for (int i = 0; i < 10; i++) {
     readings[reading_count] = digitalRead(buttonPin);
+    reading_count++;   // Added this part. Must increment manually: unlike i, reading_count isn't advanced automatically by the for loop
     delay(5);
   }
 }
@@ -302,8 +772,14 @@ unsigned long debounceStart = 0;
 
 void loop() {
   int reading = digitalRead(buttonPin);
-  debounceStart = millis();
-
+  debounceStart = millis(); // This line will be canceled and moved to the following code.
+  
+  // This is the added part with the code moved inside.
+  // raw reading changed: restart the debounce timer
+  if (reading != lastButtonReading) {
+    debounceStart = millis();
+  }
+  
   if (millis() - debounceStart >= 50 && reading != buttonState) {
     buttonState = reading;
   }
@@ -320,7 +796,9 @@ const int ledPins[3] = {4, 5, 6};
 void update_pairs() {
   for (int i = 0; i < 3; i++) {
     bool pressed = digitalRead(buttonPins[i]) == LOW;
-    digitalWrite(ledPins[0], pressed);
+    digitalWrite(ledPins[0], pressed); // Bug: 0 is fixed, always stays on the first LED of the array on each iteration
+
+    digitalWrite(ledPins[i], pressed); // Modified code: i changes at each iteration (0,1,2), so the lit LED corresponds to the button just read
   }
 }
 ```
@@ -330,10 +808,12 @@ void update_pairs() {
 ```cpp
 const int NUM_SONGS = 2;
 const int NUM_NOTES = 8;
-int melodies[NUM_SONGS][NUM_NOTES];
+int melodies[NUM_SONGS][NUM_NOTES]; // In this line the variable references are first SONGS and then NOTES
 
 void set_note(int note, int song, int frequency) {
-  melodies[note][song] = frequency;
+  melodies[note][song] = frequency; //In this line song and notes in melodies are reversed
+  // Correct code:
+  melodies[song][note] = frequency;
 }
 ```
 <details><summary>Answer</summary><code>melodies</code> was declared <code>[NUM_SONGS][NUM_NOTES]</code> — song first, note second — but <code>set_note()</code> writes <code>melodies[note][song]</code>, the axes reversed. Since <code>NUM_SONGS</code> is only 2, any <code>note</code> value of 2 or higher used as the first index writes out of bounds. It needs to match the declared order: <code>melodies[song][note] = frequency;</code>.</details>
@@ -341,7 +821,11 @@ void set_note(int note, int song, int frequency) {
 **Round 6:**
 ```cpp
 const int NUM_BUTTONS = 4;
-int debounceStart[NUM_BUTTONS];
+int debounceStart[NUM_BUTTONS]; // Once millis() exceeds what a signed int can hold, the stored value flips negative, corrupting the millis()-based elapsed-time comparisons (debounce timing breaks)
+
+// Correct code:
+unsigned long debounceStart[NUM_BUTTONS]; // This line replaces the previous one.
+
 int buttonState[NUM_BUTTONS];
 
 void setup() {
@@ -358,6 +842,8 @@ void update_cycle() {
   unsigned long currentMillis = millis();
 
   if (currentMillis - previousCycleMillis >= CYCLE_INTERVAL) {
+    previousCycleMillis = currentMillis; // This line was missing and has been added.
+
     for (int i = 0; i < NUM_PAIRS; i++) {
       buttonStates[i] = digitalRead(buttonPins[i]) == LOW;
       digitalWrite(ledPins[i], buttonStates[i]);
@@ -375,36 +861,33 @@ Answer these in your own words before moving on:
 
 1. Why does a `for` loop over a collection need `i < count` rather than `i <= count`, when `count` is the number of items currently stored (not the array's declared capacity)?
    ```
-
-
+   An array with count elements has valid indices ranging from 0 to count - 1, never up to and including count — this is because indexing in C++ starts at zero, not one. So i < count stops the loop exactly at the last valid index (count - 1), touching all and only the elements actually present. With i <= count, however, the loop performs an extra iteration with i == count, which is an index that doesn't exist in the array: that position is "out of bounds."
    ```
 
 2. Why must `buttonPins[]` and `ledPins[]` (or any pair of parallel arrays) always be read and written at the same index, rather than one array's index ever drifting from the other's?
    ```
-
-
+   Reversing or changing the order in which the array positions are used leads to behavior that isn't expected, because it breaks the positional correspondence between the two arrays: a button would end up controlling a different LED than it was intended. The program would run normally, but with the wrong logic.
    ```
 
 3. Task 2 debounces by burst-sampling; Task 3 onward debounces by waiting for the reading to settle. What's the practical downside of the burst-sampling approach that the settle-based one avoids?
    ```
-
-
+   Burst-sampling blocks the program with delay() during each burst, and can completely miss pressures that occur between bursts, while settle-based allows the program to continue running and perform other tasks without interruption.
    ```
 
 4. In a 2-D array like `melodies[NUM_SONGS][NUM_NOTES]`, why does the order of the two indices matter, even though `melodies[song][note]` and `melodies[note][song]` would allocate the same total amount of memory?
    ```
-
-
+   Because it would refer to a value that doesn't match. If I call note 2 and the values ​​are reversed, I wouldn't be calling note 2 but song 2, and that's not what I want.
+   And if the arrays had different lengths (for example, 4 songs and 10 notes), I could recall data that doesn't exist in an array.
    ```
 
 5. Why does giving each button its own entry in a debounce array (rather than one shared set of debounce variables) matter once there's more than one button to read?
    ```
-
-
+   The separate debounce controls only the button it's associated with, without affecting other buttons. If two buttons are pressed simultaneously, each debounce controls its own without interference.
    ```
 
 6. Why is an array's size fixed at declaration in C++, and what problem does keeping a separate counter like `reading_count` (distinct from the array's declared capacity) solve?
    ```
-
-
+   The size of an array is fixed in C++ because the compiler must reserve a contiguous block of memory of a known size in advance. The declared capacity (MAX_READINGS, for example) is all the space that will be occupied.
+   The reading_count keeps track of how many elements have actually been written so far, distinct from the maximum capacity of the array.
+   For example, it's as if a container could hold 10 marbles, but currently reading_count is only counting 6 because only those 6 have been put into the container.
    ```
