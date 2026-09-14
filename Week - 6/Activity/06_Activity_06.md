@@ -73,19 +73,19 @@ const Step sequence[NUM_STEPS] = {
   {7,400},
 };
 
-void setup() {  
-  for (int i = 0; i < NUM_STEPS; i++) {
-    pinMode(sequence[i].pin, OUTPUT);
-    digitalWrite(sequence[i].pin, LOW);
-  }
-}
-
 void run_sequence() {
   for (int i = 0; i < NUM_STEPS; i++) {
     digitalWrite(sequence[i].pin, HIGH);
     delay(sequence[i].duration);
     digitalWrite(sequence[i].pin, LOW);
     delay(sequence[i].duration);
+  }
+}
+
+void setup() {  
+  for (int i = 0; i < NUM_STEPS; i++) {
+    pinMode(sequence[i].pin, OUTPUT);
+    digitalWrite(sequence[i].pin, LOW);
   }
 }
 
@@ -132,6 +132,78 @@ Define `struct Reading { String sensor; float value; String unit; };`. Declare `
 - [ ] The printed output shows each record's `sensor` name and `unit`, not just a bare number
 - [ ] Exactly `NUM_READINGS` valid records end up stored, alternating temperature and humidity
 
+**Task 2**
+```cpp
+/*
+=== Task 2 - Logging DHT22 Readings as an Array of Reading Structs ===
+                        Author: Roberto Palozzo
+======================================================================
+*/
+
+#include <DHT.h>
+#define DHTTYPE DHT22
+#define DHTPIN 4
+DHT dht(DHTPIN, DHTTYPE);
+
+struct Reading {
+  String sensor;
+  float value;
+  String unit;
+};
+
+const int NUM_READINGS = 6;
+Reading readings[NUM_READINGS];
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("DHT22 Temperature and Humidity Sensor");
+  dht.begin();
+
+  for (int i = 0; i < NUM_READINGS; i++) {
+    bool isTemperature = (i %2 == 0);
+    float value;
+    
+    while (true) {
+      if (isTemperature) {
+        value = dht.readTemperature();
+      }
+      else {
+        value = dht.readHumidity();
+      }
+      if (isnan(value)) {
+        Serial.println("Reading failed, retrying...");
+        delay(2000);
+      }
+      else {
+        break;   // valore valido: esci dal while e passa oltre
+      }
+    }
+    readings[i].value = value;
+    if (isTemperature) {
+      readings[i].sensor = "temperature";
+      readings[i].unit = "C";
+    } else {
+      readings[i].sensor = "humidity";
+      readings[i].unit = "%";
+    }
+
+    delay(2000);
+  }
+  
+  Serial.println("Readings:");
+  for (int i = 0; i < NUM_READINGS; i++) {
+    Serial.print(readings[i].sensor);
+    Serial.print(": ");
+    Serial.print(readings[i].value);
+    Serial.println(readings[i].unit);
+  }
+}  
+
+void loop() {
+}
+```
+Wokwi link: https://wokwi.com/projects/474645438980629505
+
 ---
 
 ## Task 3 - Min, Max and Average Over a Struct Array's `value` Field
@@ -165,6 +237,61 @@ Reuse `struct Reading { String sensor; float value; String unit; };` from Task 2
 - [ ] `minVal`/`maxVal` are initialised from `readings[0].value`, not `0`
 - [ ] A single `for` loop computes min, max, and sum by reading `readings[i].value` each pass
 - [ ] The average uses floating-point division
+
+**Task 3**
+```cpp
+/*
+=== Task 3 - Min, Max and Average Over a Struct Array's value Field ===
+                        Author: Roberto Palozzo
+=======================================================================
+*/
+
+const int potPin = 1;
+
+struct Reading {
+  String sensor;
+  float value;
+  String unit;
+};
+
+const int NUM_READINGS = 10;
+Reading readings[NUM_READINGS];
+
+void setup() {
+  Serial.begin(115200);
+
+  for (int i = 0; i < NUM_READINGS; i++) {
+    readings[i].sensor = "pot";
+    readings[i].value = analogRead(potPin);
+    readings[i].unit = "raw";
+    delay(300);
+  }
+
+  float minVal = readings[0].value;
+  float maxVal = readings[0].value;
+  float sum = 0;
+
+  for (int i = 0; i < NUM_READINGS; i++) {
+    float v = readings[i].value;
+    if (v < minVal) minVal = v;
+    if (v > maxVal) maxVal = v;
+    sum += v;
+  }
+
+  float average = sum / NUM_READINGS;
+
+  Serial.print("Min: ");
+  Serial.println(minVal);
+  Serial.print("Max: ");
+  Serial.println(maxVal);
+  Serial.print("Average: ");
+  Serial.println(average);
+}
+
+void loop() {
+}
+```
+Wokwi link: https://wokwi.com/projects/474663973624519681
 
 ---
 
@@ -203,6 +330,70 @@ Define `struct Reading { unsigned long timestamp; int value; };`. Declare `const
 - [ ] The insertion step swaps the whole `Reading` struct (both fields together) — never just the timestamp or just the value
 - [ ] The `while` loop stops as soon as the new record's correct position is found, not after checking every entry
 - [ ] Printing the log after several presses always shows ascending timestamp order
+
+**Task 4**
+```cpp
+/*
+=== Task 4 - Insertion Sort: Keeping a Struct Log Ordered by Timestamp on Every Insert ===
+                                Author: Roberto Palozzo
+==========================================================================================
+*/
+
+const int potPin = 1;
+const int buttonPin = 6;
+
+struct Reading {
+  unsigned long timestamp;
+  int value;
+};
+
+const int MAX_READINGS = 15;
+Reading readings[MAX_READINGS];
+int reading_count = 0;
+
+bool lastButtonState = HIGH;
+
+void log_reading() {
+  if (reading_count >= MAX_READINGS) return;
+
+  Reading newReading = {millis(), analogRead(potPin)};
+  readings[reading_count] = newReading;
+  reading_count++;
+
+  int i = reading_count - 1;
+  while (i > 0 && readings[i - 1].timestamp > newReading.timestamp) {
+    readings[i] = readings[i - 1];
+    i--;
+  }
+  readings[i] = newReading;
+}
+
+void print_log() {
+  Serial.println("Log:");
+  for (int i = 0; i < reading_count; i++) {
+    Serial.print(readings[i].timestamp);
+    Serial.print(" ms -> ");
+    Serial.println(readings[i].value);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+}
+
+void loop() {
+  bool buttonState = digitalRead(buttonPin);
+
+  if (lastButtonState == HIGH && buttonState == LOW) {
+    log_reading();
+    print_log();
+  }
+
+  lastButtonState = buttonState;
+}
+```
+Wokwi link: https://wokwi.com/projects/474665694970890241
 
 ---
 
@@ -245,6 +436,68 @@ Define `struct Threshold { String sensor; float limit; };` and declare a `const 
 - [ ] A key that isn't in the table returns the sentinel (`-1.0`), and the caller explicitly checks for it before using the result
 - [ ] The alarm LED lights only when the potentiometer reading exceeds the looked-up threshold
 
+**Task 5**
+```cpp
+/*
+=== Task 5 - Simulated Dictionary: Looking Up a Per-Sensor Threshold by Name ===
+                                Author: Roberto Palozzo
+================================================================================
+*/
+
+const int potPin = 1;
+const int alarmPin = 5;
+
+struct Threshold {
+  String sensor;
+  float limit;
+};
+
+const int NUM_THRESHOLDS = 3;
+Threshold thresholds[NUM_THRESHOLDS] = {
+  {"temperature", 700.0},
+  {"humidity", 500.0},
+  {"light", 300.0},
+};
+
+float get_threshold(String sensor) {
+  for (int i = 0; i < NUM_THRESHOLDS; i++) {
+    if (thresholds[i].sensor == sensor) {
+      return thresholds[i].limit;
+    }
+  }
+  return -1.0;
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(alarmPin, OUTPUT);
+
+  float missing = get_threshold("pressure");
+  if (missing < 0) {
+    Serial.println("Threshold not found for 'pressure'");
+  }
+}
+
+void loop() {
+  int reading = analogRead(potPin);
+  float limit = get_threshold("temperature");
+
+  Serial.print("reading: ");
+  Serial.print(reading);
+  Serial.print(" | limit: ");
+  Serial.println(limit);
+
+  if (reading > limit) {
+    digitalWrite(alarmPin, HIGH);
+  } else {
+    digitalWrite(alarmPin, LOW);
+  }
+
+  delay(200);
+}
+```
+Wokwi link: https://wokwi.com/projects/475040280829571073
+
 ---
 
 ## Task 6 - Melody Playback From an Array of `Note` Structs
@@ -279,6 +532,46 @@ Define `struct Note { int frequency; int duration; };` and declare a `Note melod
 - [ ] `melody[]` is declared as data (an array of `Note`), not five separate `tone()` calls written out by hand
 - [ ] `play_melody()` uses a `for` loop reading `.frequency`/`.duration` from each element
 - [ ] `noTone()` is called once the loop finishes, and `tone()`/`noTone()` are used — never `digitalWrite()` — on the passive buzzer
+
+**Task 6**
+```cpp
+/*
+=== Task 6 - Melody Playback From an Array of Note Structs ===
+                        Author: Roberto Palozzo
+=================================================================
+*/
+
+const int buzzerPin = 8;
+
+struct Note {
+  int frequency;
+  int duration;
+};
+
+Note melody[5] = {
+  {523, 200},
+  {659, 200},
+  {784, 200},
+  {659, 200},
+  {523, 400},
+};
+
+void play_melody() {
+  for (int i = 0; i < 5; i++) {
+    tone(buzzerPin, melody[i].frequency, melody[i].duration);
+    delay(melody[i].duration + 50);
+  }
+  noTone(buzzerPin);
+}
+
+void setup() {
+  play_melody();
+}
+
+void loop() {
+}
+```
+Wokwi link:  https://wokwi.com/projects/475088535212271617
 
 ---
 
@@ -340,6 +633,168 @@ flowchart LR
 - [ ] The confirmation/alarm LED uses `millis()` (not `delay()`), turning off after 150 ms
 - [ ] The OLED shows count/min/max/average and the threshold comparison, redrawing on change or at least every 2000 ms
 - [ ] The button is still readable — and a fresh press still registers — while the flash is active
+
+**Task 7**
+```cpp
+/*
+=== Task 7 - Non-blocking Struct-Based Logging Station With Threshold Lookup ===
+                                Author: Roberto Palozzo
+==================================================================================
+*/
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_SDA 8
+#define OLED_SCL 9
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+const int potPin = 1;
+const int buttonPin = 4;
+const int ledPin = 10;
+
+struct Reading {
+  unsigned long timestamp;
+  int value;
+};
+
+const int MAX_READINGS = 16;
+Reading readings[MAX_READINGS];
+int reading_count = 0;
+
+struct Threshold {
+  String sensor;
+  float limit;
+};
+
+const int NUM_THRESHOLDS = 1;
+Threshold thresholds[NUM_THRESHOLDS] = {
+  {"pot", 2000.0},
+};
+
+int minVal = 0, maxVal = 0;
+float average = 0;
+
+bool lastButtonState = HIGH;
+
+bool flashing = false;
+unsigned long flashStart = 0;
+const unsigned long FLASH_DURATION = 150;
+
+unsigned long lastDisplayUpdate = 0;
+const unsigned long DISPLAY_INTERVAL = 2000;
+bool displayDirty = true;
+
+float get_threshold(String sensor) {
+  for (int i = 0; i < NUM_THRESHOLDS; i++) {
+    if (thresholds[i].sensor == sensor) {
+      return thresholds[i].limit;
+    }
+  }
+  return -1.0;
+}
+
+void log_reading() {
+  if (reading_count >= MAX_READINGS) return;
+
+  Reading newReading = {millis(), analogRead(potPin)};
+  readings[reading_count] = newReading;
+  reading_count++;
+
+  int i = reading_count - 1;
+  while (i > 0 && readings[i - 1].timestamp > newReading.timestamp) {
+    readings[i] = readings[i - 1];
+    i--;
+  }
+  readings[i] = newReading;
+}
+
+void compute_stats() {
+  minVal = readings[0].value;
+  maxVal = readings[0].value;
+  long sum = 0;
+
+  for (int i = 0; i < reading_count; i++) {
+    int v = readings[i].value;
+    if (v < minVal) minVal = v;
+    if (v > maxVal) maxVal = v;
+    sum += v;
+  }
+  average = (float)sum / reading_count;
+}
+
+void start_flash() {
+  digitalWrite(ledPin, HIGH);
+  flashing = true;
+  flashStart = millis();
+}
+
+void update_flash() {
+  if (flashing && millis() - flashStart >= FLASH_DURATION) {
+    digitalWrite(ledPin, LOW);
+    flashing = false;
+  }
+}
+
+void update_display() {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Count: ");
+  display.println(reading_count);
+
+  if (reading_count > 0) {
+    display.print("Min: ");
+    display.println(minVal);
+    display.print("Max: ");
+    display.println(maxVal);
+    display.print("Avg: ");
+    display.println(average);
+
+    float limit = get_threshold("pot");
+    int latest = readings[reading_count - 1].value;
+    display.print(latest > limit ? "ABOVE" : "BELOW");
+    display.println(" threshold");
+  }
+
+  display.display();
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+
+  Wire.begin(OLED_SDA, OLED_SCL);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  update_display();
+}
+
+void loop() {
+  bool buttonState = digitalRead(buttonPin);
+
+  if (lastButtonState == HIGH && buttonState == LOW) {
+    log_reading();
+    compute_stats();
+    start_flash();
+    displayDirty = true;
+  }
+  lastButtonState = buttonState;
+
+  update_flash();
+
+  if (displayDirty || millis() - lastDisplayUpdate >= DISPLAY_INTERVAL) {
+    update_display();
+    lastDisplayUpdate = millis();
+    displayDirty = false;
+  }
+}
+```
+Wokwi link: https://wokwi.com/projects/473221049759353857
 
 ---
 
