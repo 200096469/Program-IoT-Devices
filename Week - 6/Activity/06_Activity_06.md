@@ -807,7 +807,7 @@ For each round, read the snippet and write down what's wrong **before** revealin
 struct Reading {
   String sensor;
   float value;
-}
+}                     // The semicolon is missing in this line after the curly brace.
 
 Reading r = {"temperature", 23.6};
 ```
@@ -821,7 +821,8 @@ struct Reading {
   String unit;
 };
 
-Reading r = {23.6, "temperature", "C"};
+Reading r = {23.6, "temperature", "C"};    // In this line, the values ​​within the parentheses are swapped.
+// The first value corresponds to the float and must be placed in the second position in the list, corresponding to the second field defined in the `Reading` struct.
 ```
 <details><summary>Answer</summary>The initializer list's values are in the wrong order for the declared field order (<code>sensor</code>, then <code>value</code>, then <code>unit</code>). As written, <code>r.sensor</code> ends up holding <code>23.6</code> converted to a string-like value and <code>r.value</code> ends up holding <code>"temperature"</code> — the fields are filled positionally, not by matching type or name, so the initializer values must be listed in the exact same order the struct declares its fields.</details>
 

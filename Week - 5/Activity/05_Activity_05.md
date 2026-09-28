@@ -248,11 +248,12 @@ const unsigned long DEBOUNCE_TIME = 50;
 
 int lastButtonReading = HIGH;
 int buttonState = HIGH;
+bool ledState = false;
 
 unsigned long debounceStart = 0;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
@@ -268,20 +269,21 @@ void loop() {
   if (millis() - debounceStart >= DEBOUNCE_TIME) {
     
     if (reading != buttonState) {
-        buttonState = reading;
+      buttonState = reading;
       
       if (buttonState == LOW) {
-          digitalWrite(ledPin, HIGH);
-          Serial.println("led ON");
-      }
-
-      else {
-        digitalWrite(ledPin, LOW);
-        Serial.println("led OFF");
+        ledState = !ledState;
+        digitalWrite(ledPin, ledState);
+      
+        if (ledState) {
+          Serial.println("Led On!");
+        }
+        else {
+          Serial.println("Led Off!");
+        }
       }
     }
   }
-
   lastButtonReading = reading;
 }
 ```
