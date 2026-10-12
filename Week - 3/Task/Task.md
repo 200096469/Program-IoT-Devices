@@ -54,32 +54,81 @@ flowchart LR
 >
 > Wokwi Link : https://wokwi.com/projects/472054525585822721
 >
-> 
+
+**Task** - Reading Inputs and Selection
+```cpp
+/*
+=== 3.1 Two-Button LED Control System ===
+        Author: Roberto Palozzo
+=========================================
+*/
+
+const int redButtonPin   = 4;
+const int greenButtonPin = 5;
+const int redLedPin      = 6;
+const int greenLedPin    = 13;
+
+String lastBranch = "";                // last branch printed
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(redButtonPin, INPUT_PULLUP);
+  pinMode(greenButtonPin, INPUT_PULLUP);
+  pinMode(redLedPin, OUTPUT);
+  pinMode(greenLedPin, OUTPUT);
+}
+
+void loop() {
+  int redState   = digitalRead(redButtonPin);
+  int greenState = digitalRead(greenButtonPin);
+  delay(50);                           // simple debounce
+
+  String branch;
+
+  if (redState == LOW) {               // red pressed (INPUT_PULLUP: pressed = LOW)
+    digitalWrite(redLedPin, HIGH);
+    digitalWrite(greenLedPin, LOW);
+    branch = "Red button -> red LED on";
+  } else if (greenState == LOW) {      // green pressed
+    digitalWrite(redLedPin, LOW);
+    digitalWrite(greenLedPin, HIGH);
+    branch = "Green button -> green LED on";
+  } else {                             // nothing pressed
+    digitalWrite(redLedPin, LOW);
+    digitalWrite(greenLedPin, LOW);
+    branch = "No button -> both LEDs off";
+  }
+
+  // print only when the branch changes, so the monitor stays readable
+  if (branch != lastBranch) {
+    Serial.println(branch);
+    lastBranch = branch;
+  }
+}
+```
+Wokwi link: https://wokwi.com/projects/477652430153669633
+
 ### Questions
 
 - Why does `INPUT_PULLUP` make "pressed" read `LOW` instead of `HIGH`?
   ```
-
-
+  This is because when the button pins are set to INPUT_PULLUP, the pin is supplied with 3.3V via an internal resistor; consequently, when the button is not pressed, the pin detects a voltage corresponding to HIGH (or 1). Since the button is connected between the pin and GND, pressing it pulls the voltage down to ground, resulting in a LOW (or 0) reading. That is why the "pressed" state corresponds to LOW.
   ```
 
 - What would go wrong if you checked the two buttons using two separate `if` statements instead of one `if / else if`?
   ```
-
-
+  With two separate `if` blocks, both are executed sequentially in the order they are written—first one, then the other.
+  In contrast, using `if` / `else if` / `else` allows you to handle different situations based on different actions; in short, the result is: "turn on the red LED if the red button is pressed; otherwise, turn on the green LED if the green button is pressed; and do nothing if neither button is pressed."
   ```
 
 - Why does adding `delay(50)` after reading a button count as debouncing?
-
   ```
-
-
+  When a button is pressed, its metal contacts bounce for a few milliseconds due to the spring mechanism, creating a series of rapid opening and closing events that the microcontroller can detect. Waiting 50 ms after the button is pressed allows this transition phase to be bypassed; this ensures the program reads the state only after the contacts have stabilized, registering a single, clean press rather than a burst of pulses.
   ```
 
 - In `if / else if / else`, if both buttons happened to read `LOW` at the same instant, which branch would run, and why?
   ```
-
-
+  The red LED branch, because it is the first condition evaluated from top to bottom. Since it is true, it is executed immediately, causing all subsequent branches (including the green *else if*) to be skipped entirely. For this reason, the red LED takes precedence.
   ```
 
 ### Spot-the-Bug Worksheet
