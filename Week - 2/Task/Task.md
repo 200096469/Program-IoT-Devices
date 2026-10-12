@@ -17,26 +17,74 @@ Build the LED circuit and write a program that blinks it using a function.
 - Give the function parameters so it can blink at different speeds.
 - Write a function that turns the LED on or off and returns its new state, and print that state to the Serial Monitor.
 
+**Task** - Digital Output and Functions
+```cpp
+/*
+=== Task - Digital Output and Functions (Week 2) ===
+              Author: Roberto Palozzo
+====================================================
+*/
+
+const int ledPin = 13;
+bool ledState = false;                 // current LED state
+
+// Blinks the LED once: on for onMs, off for offMs
+void blinkLed(int onMs, int offMs) {
+  digitalWrite(ledPin, HIGH);
+  delay(onMs);
+  digitalWrite(ledPin, LOW);
+  delay(offMs);
+}
+
+// Switches the LED on or off and returns its new state
+bool setLed(bool on) {
+  digitalWrite(ledPin, on ? HIGH : LOW);
+  ledState = on;
+  return ledState;
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  blinkLed(200, 200);                  // fast
+  blinkLed(200, 200);
+  blinkLed(800, 800);                  // slow
+
+  bool state = setLed(true);
+  Serial.print("LED state: ");
+  Serial.println(state ? "ON" : "OFF");
+  delay(1000);
+
+  state = setLed(false);
+  Serial.print("LED state: ");
+  Serial.println(state ? "ON" : "OFF");
+  delay(1000);
+}
+```
+Wokwi link: https://wokwi.com/projects/477634517574884353
+
 ### Guided Questions
 - Why does the LED behave the same whether the blink logic is in `loop()` directly or inside a function?
   ```
-
-
+  A function serves to group instructions under a single name. When `loop()` calls `blinkLed()`, the same `digitalWrite` and `delay` instructions are executed in the same order; consequently, the LED performs exactly the same action. The difference is purely organizational: the code becomes more readable and can be reused anywhere without needing to be copied—just simply call the function.
+  ```
 - What does `pinMode` do, and why do we only call it once, in `setup()`?
   ```
-
-
+  pinMode tells the board whether a pin is an input or an output. The pin keeps that setting until the board restarts, so setting it once in setup() is enough. Calling it in loop() would repeat the same work thousands of times for no reason.
+  ```
 - Why does a function need parameters if you want it to blink at different speeds?
   ```
-
-
+  Without parameters, the on and off times would be fixed within the function, requiring a separate function for each speed. By using `onMs` and `offMs` as parameters, a single function allows for blinking at any speed: `blinkLed(200, 200)` is fast, while `blinkLed(800, 800)` is slow.
+  ```
 - Why does a function need a return type other than `void` if you want it to report back the LED's new state?
-  ````
-
+  ```
+  A void function cannot give a value back to the code that called it. setLed() returns a bool, so loop() can store the new state in a variable and print it. With void I would have to read a global variable instead, which is less clear and easier to get wrong.
+  ```
 
 ### Spot-the-Bug Worksheet
-
-
 
 **Format:** For each round, read the snippet and write down what's wrong **before** revealing the answer.
 
