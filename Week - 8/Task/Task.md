@@ -16,6 +16,7 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 
 > **Schematic:**
 >
+![alt text](image.png)
 > _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (Export → Schematic image) and add your share link (Export → Share link) below it.]_
 >
 > <details><summary>Schematic link</summary>
