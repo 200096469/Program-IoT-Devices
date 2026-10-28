@@ -58,7 +58,7 @@ Before any sensor data can be sent anywhere, the device needs to reliably connec
 >
 > _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (Export → Schematic image) and add your share link (Export → Share link) below it.]_
 >
-> <details><summary>Schematic link</summary>
+> <details><summary>![alt text](image.png)</summary>
 >
 > [Open the example schematic in Circuit Studio](https://circuit-studio.pages.dev/#p=zdZDBSsQwFEV_pdyVQjok7TijbyfjwlkpTN0os0jbKJG2CS-JOpT-u2TQjeDywbn3XN6MV8ejjiBYF8vOcpdsLENMvXUQ-DAcrJtASmDSowGhMaM3rGNiU9wOhmNxOIVoxuLi7r5R6hICHRsdTQ9CJatNqWSp1o2sSCqqtqtrtXmGQPL9H6jaNlKSvKH11apSdYZap7nfZ8gEX1dlqEtvu7ysc6N3k5liAL3MsJl5UhCIJ59nnpMQ-AJtt1LgBCqVkgLsIkgKDLo1AwiHunjc7x4g4Nn5AJqX_73LUeDTssnSo0CXQnTjzvUGNKVhyK3TGwia-2SnvHOwLWu2v4m2Bc3wmuOP6T3ld56PZfkG)
 >
@@ -68,7 +68,7 @@ Before any sensor data can be sent anywhere, the device needs to reliably connec
 >
 > | Connection | Pin type needed | Your GPIO |
 > |---|---|---|
-> | LED (through the 220 Ω resistor; LED cathode → GND) | Digital output | GPIO ___ |
+> | LED (through the 220 Ω resistor; LED cathode → GND) | Digital output | GPIO _14_ |
 
 Write `connectWiFi()` using `SSID`/`PASSWORD` constants set to **your own 2.4 GHz Wi-Fi network** (a phone hotspot works well; the ESP32 cannot join 5 GHz networks), called once from `setup()` with a bounded blocking retry (`WiFi.status() != WL_CONNECTED`, max 20 attempts, `delay(500)` between attempts; this is acceptable here because it runs once, in `setup()`, exactly like this course's other one-shot initialisation calls). If it connects, print `"Connected! IP: "` followed by `WiFi.localIP()`; if it runs out of attempts, print `"Connection failed - continuing offline."`. In `loop()`, check `WiFi.status()` on every pass and drive the status LED `HIGH` when connected, `LOW` when not. `loop()` itself must contain no `delay()` at all.
 
@@ -76,13 +76,13 @@ Write `connectWiFi()` using `SSID`/`PASSWORD` constants set to **your own 2.4 GH
 > Evidence: _(attach a photo or short video of your working circuit on the ESP32-PICO, plus a screenshot of the Serial Monitor output)_
 >
 **Check yourself:**
-- [ ] Pin table filled in with pins that follow the pin rules, and the same pins used in both the schematic and the code constants
-- [ ] Schematic drawn in Circuit Studio using every component listed above, pasted into the Schematic box with its share link
-- [ ] `SSID`/`PASSWORD` match your 2.4 GHz network exactly (case-sensitive), and the Serial Monitor shows "Connected!" with an IP address
-- [ ] Before submitting, the real password is replaced with `"YOUR_WIFI_PASSWORD"` so it isn't shared
-- [ ] `connectWiFi()`'s blocking retry runs only once, from `setup()`, never from `loop()`
-- [ ] The status LED correctly reflects `WiFi.status()` on every single pass of `loop()`
-- [ ] `loop()` contains no `delay()`
+- [X] Pin table filled in with pins that follow the pin rules, and the same pins used in both the schematic and the code constants
+- [X] Schematic drawn in Circuit Studio using every component listed above, pasted into the Schematic box with its share link
+- [X] `SSID`/`PASSWORD` match your 2.4 GHz network exactly (case-sensitive), and the Serial Monitor shows "Connected!" with an IP address
+- [X] Before submitting, the real password is replaced with `"YOUR_WIFI_PASSWORD"` so it isn't shared
+- [X] `connectWiFi()`'s blocking retry runs only once, from `setup()`, never from `loop()`
+- [X] The status LED correctly reflects `WiFi.status()` on every single pass of `loop()`
+- [X] `loop()` contains no `delay()`
 
 ---
 

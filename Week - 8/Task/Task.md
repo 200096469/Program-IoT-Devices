@@ -19,7 +19,7 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 ![alt text](image.png)
 > _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (Export → Schematic image) and add your share link (Export → Share link) below it.]_
 >
-> <details><summary>Schematic link</summary>
+> <details><summary>![alt text](image-2.png)</summary>
 >
 > [Open the example schematic in Circuit Studio]()
 >
@@ -29,9 +29,9 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 >
 > | Connection | Pin type needed | Your GPIO |
 > |---|---|---|
-> | Potentiometer wiper (outer legs → 3.3V and GND) | Analog input, **ADC1 only** | GPIO ___ |
-> | Alert LED (through the 220 Ω resistor; LED cathode → GND) | Digital output | GPIO ___ |
-> | Passive buzzer + (buzzer − → GND) | Digital output (`tone()`) | GPIO ___ |
+> | Potentiometer wiper (outer legs → 3.3V and GND) | Analog input, **ADC1 only** | GPIO _01_ |
+> | Alert LED (through the 220 Ω resistor; LED cathode → GND) | Digital output | GPIO _39_ |
+> | Passive buzzer + (buzzer − → GND) | Digital output (`tone()`) | GPIO _38_ |
 
 **How to draw the schematic:** before building the circuit, draw it in [Circuit Studio](https://circuit-studio.pages.dev/).
 - Include every component in the list above: the ESP32-PICO, the potentiometer, the alert LED with its 220 Ω resistor, and the passive buzzer.
