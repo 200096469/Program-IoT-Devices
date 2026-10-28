@@ -17,9 +17,9 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 > **Schematic:**
 >
 ![alt text](image.png)
-> _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (Export → Schematic image) and add your share link (Export → Share link) below it.]_
+> _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (![alt text](image-1.png)) and add your share link ([Export → Share link](https://circuit-studio.pages.dev/#p=zjZRdb9owGEb_Cnqvkyq2Qxp8t5WpqjZRtLFN6lRVTmKoIbGD4xCg4r9PprB8DKJegu1z7MeP8wZzpTNmgIJQxo2Fjkth3MKUiVDgwIbrQigJFDkgWcaBwowVq4E7mHBTKb0ScjFgMhmMmWERK_jgTknJY2MXORBrzgxPgAL2cOAiz8W3M4ypH1KCbkIyegIHyjzpTgpnHqb-iJLRzQgROylSTCcPdhIvcoLdgri5iO0WY5XlSnJpCqB_3kDYOT8ROGB2ud3vcSU4sAXqjjwHdkADzwGtDFDPgZRFPAUKP8hg-nD3CA7kWuUF0LfDdevBOYniF72eL3ZE1L5cGS6NUBk3XL97if_uJeFZPGqYp48z1NCCes0KoMjzPO_gwDwVOdA5SwvesO7ZuuRyW1tTfj7jkLzL_OFZhsKG7duXccsWq1RpoKB5Ald1qqoIUqoRarnfn0_nEnQ63r9c8W3D-PmpJVwJaaEsNmLDryvZMM91nNXKTRyTDTkFOjwZ0YWbJL8Ial_jZUO5nOMtCmvDQiZtfB1hA38_GX8In_JQ-Wh9Ae9i3BvY_WSMP2LQWHjFsrxkCLzuCUZtAfmIICdCq33jDjQvRGFU9-L94GLVvl-q9bBb6mcHKqF54_VWL7uYs3I5BAfYsaOdl5YDBWSrE9WjdV_s6NSOnvdRP9fqhewDmaasj0w65LonveRbnGdxELfJ9cOxaycdcl2RXvJijbOdj9vk-gtg137tkOtq9JIDXeHNpupL43eLfPyw2r_vpw-P6GrI0W4VVdu-KKbXsSS8xi2MzDLpt7l1Sf-vRZs7usbdVXL46gV9XNwJuB3_pzb52YG4LIzK7lTCgcoyTe2wXNjvnk5KIW0MqYg00-LY_GcHoiM9Z9qc3uSyzHKujz8Oh78)) below it.]_
 >
-> <details><summary>![alt text](image-2.png)</summary>
+> <details><summary>Schematic link</summary>
 >
 > [Open the example schematic in Circuit Studio]()
 >
