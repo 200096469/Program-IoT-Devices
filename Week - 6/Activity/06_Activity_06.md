@@ -925,33 +925,57 @@ Answer these in your own words before moving on:
 
 1. What is the advantage of a `struct` record over two parallel arrays holding the same data, in terms of the bugs it makes impossible?
    ```
-   The main advantage is the elimination of data misalignment: by grouping information into a single block using a struct and its associated variables, one eliminates the loss of correspondence between data — a common error with parallel arrays that is difficult to detect.
+   The main advantage is the elimination of data misalignment: by grouping information
+   into a single block using a struct and its associated variables, one eliminates the
+   loss of correspondence between data — a common error with parallel arrays that is
+   difficult to detect.
    ```
 
 2. Why does a struct definition need a trailing semicolon after its closing brace, when a function definition does not?
    ```
    It depends on how the compiler interprets and handles these two grammatical structures.
-   A `struct` is a type declaration; in C++, its definition also allows for the direct declaration of one or more variables (instances) immediately after the closing brace (e.g., `struct Dot { int x, int y; } myDot;`). Since it can be followed by variable names and is part of a declaration statement, the compiler requires a semicolon (`;`) to determine where the entire statement ends.
-   A function, on the other hand, is a block of executable code that defines an action, with its own body enclosed in braces (`{ ... }`). Its syntax does not provide for variable declarations immediately after the block closes, so the compiler recognizes the end of the function simply by the closing brace (`}`), without the need for additional separators.
+   A `struct` is a type declaration; in C++, its definition also allows for the direct
+   declaration of one or more variables (instances) immediately after the closing brace
+   (e.g., `struct Dot { int x, int y; } myDot;`). Since it can be followed by variable
+   names and is part of a declaration statement, the compiler requires a semicolon (`;`)
+   to determine where the entire statement ends.
+   A function, on the other hand, is a block of executable code that defines an action,
+   with its own body enclosed in braces (`{ ... }`). Its syntax does not provide for
+   variable declarations immediately after the block closes, so the compiler recognizes
+   the end of the function simply by the closing brace (`}`), without the need for
+   additional separators.
    ```
 
 3. Why is a linear search over a small key-value struct array an acceptable stand-in for a dictionary on a microcontroller, when it would not scale well for a table of thousands of entries?
    ```
-   It is acceptable for small arrays because it does not waste RAM and executes very quickly with few elements. It is not scalable because execution time increases in proportion to the number of elements; when dealing with thousands of data points, it creates delays similar to blocking `delay()` calls in the code, keeping the processor constantly occupied with sequential reading.
+   It is acceptable for small arrays because it does not waste RAM and executes very
+   quickly with few elements. It is not scalable because execution time increases in
+   proportion to the number of elements; when dealing with thousands of data points, it
+   creates delays similar to blocking `delay()` calls in the code, keeping the processor
+   constantly occupied with sequential reading.
    ```
 
 4. Why must a lookup function like `get_threshold()` return a sentinel value for "not found," and what must every caller do with that return value before using it?
    ```
-   Because it serves to unequivocally signal a search failure (e.g., via -1 or NaN)—preventing the program from proceeding with incorrect or arbitrary data—and every caller must always verify the returned value using an `if` condition (or `isnan()`) before using it, handling the error to avoid silent bugs or anomalous behavior.
+   Because it serves to unequivocally signal a search failure (e.g., via -1 or
+   NaN)—preventing the program from proceeding with incorrect or arbitrary data—and every
+   caller must always verify the returned value using an `if` condition (or `isnan()`)
+   before using it, handling the error to avoid silent bugs or anomalous behavior.
    ```
 
 5. In an insertion sort performed on every new record, why does only the newly-inserted record ever need to move, rather than re-checking the whole array?
    ```
-   Because the preceding part of the array is already sorted, the only element out of place is the one that has just arrived; therefore, you simply need to "slide" the new record backward (shifting the other elements by one position) until it finds its correct spot.
+   Because the preceding part of the array is already sorted, the only element out of
+   place is the one that has just arrived; therefore, you simply need to "slide" the new
+   record backward (shifting the other elements by one position) until it finds its
+   correct spot.
    You only need to compare and position that single element, without having to re-examine the rest.
    ```
 
 6. Why can't two struct variables be compared directly with `==` in C++ the way two `int` variables can?
    ```
-   Because an `int` is a single number that the computer can compare in one go, whereas a `struct` is a container for multiple pieces of data. The compiler does not automatically know which fields to compare or how to do so, unless explicitly instructed with a comparison rule.
+   Because an `int` is a single number that the computer can compare in one go, whereas a
+   `struct` is a container for multiple pieces of data. The compiler does not
+   automatically know which fields to compare or how to do so, unless explicitly
+   instructed with a comparison rule.
    ```

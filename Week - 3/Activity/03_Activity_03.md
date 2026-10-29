@@ -907,18 +907,26 @@ Answer these in your own words before moving on:
 1. Why does `INPUT_PULLUP` read `LOW` when pressed, while `INPUT_PULLDOWN` reads `HIGH` when pressed?
   ```
 With INPUT_PULLUP the internal resistance keeps the voltage on the output pin at 3.3V. 
-When the button is pushed down, the pin is connected to ground and the voltage becomes 0V, which corresponds to LOW.  
+When the button is pushed down, the pin is connected to ground and the voltage becomes 0V,
+which corresponds to LOW.
 With INPUT_PULLDOWN, the internal resistance keeps the pin connected to ground (0V) by default.  
 When the button is pressed, the pin is connected to 3.3V instead, which corresponds to HIGH.
   ```
 2. What's the practical difference between `if`, `if / else`, and `if / else if / else` in terms of how many branches can run per loop?
   ```
-With "if" only one block of code is executed. If false, nothing happens. With two "if" statements, as in Task 1, one block at a time is executed from top to bottom. Both can be true and therefore be executed one at a time, independent of each other, depending on the condition.  
-With if / else, the code that evaluates to true is executed. The other is skipped. The same happens with if / else if / else.
+With "if" only one block of code is executed. If false, nothing happens. With two "if"
+statements, as in Task 1, one block at a time is executed from top to bottom. Both can be
+true and therefore be executed one at a time, independent of each other, depending on the
+condition.
+With if / else, the code that evaluates to true is executed. The other is skipped. The
+same happens with if / else if / else.
   ```
 3. Why does `&&` require both conditions to be true, while `||` only needs one? Give a real-world example of each from this activity.
   ```
-  The two &&s mean "and," so the two conditions must be true, equal. If both conditions are true, the result is true; otherwise, it's false. With ||, meaning "or," one of the two conditions must be true, either one or the other. If either condition is true, the result is true.
+  The two &&s mean "and," so the two conditions must be true, equal. If both conditions
+  are true, the result is true; otherwise, it's false. With ||, meaning "or," one of the
+  two conditions must be true, either one or the other. If either condition is true, the
+  result is true.
 
   The following exemple is taken from Task 3:
   // Sound the alarm only when BOTH conditions are true:
@@ -944,19 +952,31 @@ With if / else, the code that evaluates to true is executed. The other is skippe
 4. In Task 6/8, why is edge detection (comparing to `lastButtonState`) necessary instead of just checking `if (buttonState == LOW)` on its own?
 
   ```
-  When the button is pressed, the loop runs many times in a row, and the pin reads LOW on every single pass. By adding edge detection, the condition is established at the exact moment it happens. It would be like pressing a doorbell button. The first state says the button is pressed for as long as it remains in that state; the second says the button has been pressed, so the bell rings with a single chime even if the button is held down for a long time.
+  When the button is pressed, the loop runs many times in a row, and the pin reads LOW on
+  every single pass. By adding edge detection, the condition is established at the exact
+  moment it happens. It would be like pressing a doorbell button. The first state says the
+  button is pressed for as long as it remains in that state; the second says the button
+  has been pressed, so the bell rings with a single chime even if the button is held down
+  for a long time.
   ```
 5. Why must the most specific condition be checked first in an `if / else if / else` chain?
   ```
-  The most specific condition must be checked first because an if/else if/else chain is evaluated from top to bottom and stops as soon as the first condition is true.
+  The most specific condition must be checked first because an if/else if/else chain is
+  evaluated from top to bottom and stops as soon as the first condition is true.
   For example, if the first "if" condition is true, the subsequent conditions are skipped.
-  If the first "if" condition is false, it also checks the second "else if." If this condition is true, the rest is skipped; otherwise, it also checks the third "else" condition.
+  If the first "if" condition is false, it also checks the second "else if." If this
+  condition is true, the rest is skipped; otherwise, it also checks the third "else"
+  condition.
   ```
 
 6. Why does the DHT22 need to be read with `millis()`-style timing instead of a short `delay()`, unlike a button or PIR sensor?
   ```
   The DHT22 has a physical hardware limit: it can only be reliably polled once every 2 seconds.
-  Using delay(2000) to meet this limit blocks the entire program for a full 2 ​​seconds, as in Task 8, including the button and PIR, which should remain responsive at all times. With millis(), however, the program continues to run freely, reading the button/PIR every cycle, without delay, and only reads the DHT22 when 2000 ms have actually passed since millis(), without ever stopping the rest of the system.
+  Using delay(2000) to meet this limit blocks the entire program for a full 2 ​​seconds,
+  as in Task 8, including the button and PIR, which should remain responsive at all times.
+  With millis(), however, the program continues to run freely, reading the button/PIR
+  every cycle, without delay, and only reads the DHT22 when 2000 ms have actually passed
+  since millis(), without ever stopping the rest of the system.
   ```
 
 

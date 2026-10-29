@@ -863,33 +863,51 @@ Answer these in your own words before moving on:
 
 1. Why does a `for` loop over a collection need `i < count` rather than `i <= count`, when `count` is the number of items currently stored (not the array's declared capacity)?
    ```
-   An array with count elements has valid indices ranging from 0 to count - 1, never up to and including count — this is because indexing in C++ starts at zero, not one. So i < count stops the loop exactly at the last valid index (count - 1), touching all and only the elements actually present. With i <= count, however, the loop performs an extra iteration with i == count, which is an index that doesn't exist in the array: that position is "out of bounds."
+   An array with count elements has valid indices ranging from 0 to count - 1, never up to
+   and including count — this is because indexing in C++ starts at zero, not one. So i <
+   count stops the loop exactly at the last valid index (count - 1), touching all and only
+   the elements actually present. With i <= count, however, the loop performs an extra
+   iteration with i == count, which is an index that doesn't exist in the array: that
+   position is "out of bounds."
    ```
 
 2. Why must `buttonPins[]` and `ledPins[]` (or any pair of parallel arrays) always be read and written at the same index, rather than one array's index ever drifting from the other's?
    ```
-   Reversing or changing the order in which the array positions are used leads to behavior that isn't expected, because it breaks the positional correspondence between the two arrays: a button would end up controlling a different LED than it was intended. The program would run normally, but with the wrong logic.
+   Reversing or changing the order in which the array positions are used leads to behavior
+   that isn't expected, because it breaks the positional correspondence between the two
+   arrays: a button would end up controlling a different LED than it was intended. The
+   program would run normally, but with the wrong logic.
    ```
 
 3. Task 2 debounces by burst-sampling; Task 3 onward debounces by waiting for the reading to settle. What's the practical downside of the burst-sampling approach that the settle-based one avoids?
    ```
-   Burst-sampling blocks the program with delay() during each burst, and can completely miss pressures that occur between bursts, while settle-based allows the program to continue running and perform other tasks without interruption.
+   Burst-sampling blocks the program with delay() during each burst, and can completely
+   miss pressures that occur between bursts, while settle-based allows the program to
+   continue running and perform other tasks without interruption.
    ```
 
 4. In a 2-D array like `melodies[NUM_SONGS][NUM_NOTES]`, why does the order of the two indices matter, even though `melodies[song][note]` and `melodies[note][song]` would allocate the same total amount of memory?
    ```
-   Because it would refer to a value that doesn't match. If I call note 2 and the values ​​are reversed, I wouldn't be calling note 2 but song 2, and that's not what I want.
-   And if the arrays had different lengths (for example, 4 songs and 10 notes), I could recall data that doesn't exist in an array.
+   Because it would refer to a value that doesn't match. If I call note 2 and the values
+   ​​are reversed, I wouldn't be calling note 2 but song 2, and that's not what I want.
+   And if the arrays had different lengths (for example, 4 songs and 10 notes), I could
+   recall data that doesn't exist in an array.
    ```
 
 5. Why does giving each button its own entry in a debounce array (rather than one shared set of debounce variables) matter once there's more than one button to read?
    ```
-   The separate debounce controls only the button it's associated with, without affecting other buttons. If two buttons are pressed simultaneously, each debounce controls its own without interference.
+   The separate debounce controls only the button it's associated with, without affecting
+   other buttons. If two buttons are pressed simultaneously, each debounce controls its
+   own without interference.
    ```
 
 6. Why is an array's size fixed at declaration in C++, and what problem does keeping a separate counter like `reading_count` (distinct from the array's declared capacity) solve?
    ```
-   The size of an array is fixed in C++ because the compiler must reserve a contiguous block of memory of a known size in advance. The declared capacity (MAX_READINGS, for example) is all the space that will be occupied.
-   The reading_count keeps track of how many elements have actually been written so far, distinct from the maximum capacity of the array.
-   For example, it's as if a container could hold 10 marbles, but currently reading_count is only counting 6 because only those 6 have been put into the container.
+   The size of an array is fixed in C++ because the compiler must reserve a contiguous
+   block of memory of a known size in advance. The declared capacity (MAX_READINGS, for
+   example) is all the space that will be occupied.
+   The reading_count keeps track of how many elements have actually been written so far,
+   distinct from the maximum capacity of the array.
+   For example, it's as if a container could hold 10 marbles, but currently reading_count
+   is only counting 6 because only those 6 have been put into the container.
    ```

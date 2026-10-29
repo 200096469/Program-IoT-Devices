@@ -37,6 +37,8 @@ flowchart LR
     Cathode1 --- GND3["GND"]
 ```
 
+Wokwi Link : https://wokwi.com/projects/473961269590110209
+
 **Requirements:**
 - Define `struct Event { unsigned long timestamp; int intensity; };` and declare `const int MAX_EVENTS = 10;`, `Event events[MAX_EVENTS];`, and `int event_count`.
 - Edge-detect the PIR reading (track a `lastMotionState`) so a new event is logged only on the transition from no-motion to motion not on every pass while motion continues.
@@ -48,45 +50,197 @@ flowchart LR
 
 
 
+**Task - Structured Data (Structs & Dictionaries)**  
+```cpp
+/*
+=== Task.md - Structured Data (Structs & Dictionaries) (Week 6) ===
+                      Author: Roberto Palozzo
+===================================================================
+*/
+
+const int pirPin    = 3;
+const int potPin    = 1;
+const int buttonPin = 5;
+const int ledPin    = 9;
+
+// One record per motion event: when it happened and how strong it was
+struct Event {
+  unsigned long timestamp;
+  int intensity;
+};
+
+const int MAX_EVENTS = 10;
+Event events[MAX_EVENTS];
+int event_count = 0;
+
+// Dictionary-style table: key = zone name, value = alert limit
+struct ZoneThreshold {
+  String zone;
+  int limit;
+};
+
+const int NUM_ZONES = 1;
+ZoneThreshold thresholds[NUM_ZONES] = {
+  {"bench", 3000}   // pot reads 0-4095, alert above 3000
+};
+
+// PIR edge detection
+int lastMotionState = LOW;
+
+// Button debounce + edge detection
+int lastButtonReading = HIGH;           // raw reading, last pass
+int buttonState = HIGH;                 // debounced, trusted state
+unsigned long debounceStart = 0;        // when the raw reading last changed
+const unsigned long DEBOUNCE_DELAY = 50;
+
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(pirPin, INPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+
+  Serial.println("Bench motion logger ready.");
+}
+
+// Linear search of the table. Returns -1 if the zone is not found.
+int get_threshold(String zone) {
+  for (int i = 0; i < NUM_ZONES; i++) {
+    if (thresholds[i].zone == zone) {
+      return thresholds[i].limit;
+    }
+  }
+  return -1;   // sentinel: zone not in the table
+}
+
+// Builds one Event, appends it, then moves it left until the log is sorted
+void log_event(int reading) {
+  if (event_count >= MAX_EVENTS) {
+    Serial.println("Log full - event not stored.");
+    return;
+  }
+
+  Event newEvent = {millis(), reading};   // hold the new record first
+
+  events[event_count] = newEvent;         // append at the end
+  int j = event_count;
+  event_count++;
+
+  // Insertion step: swap the whole record left past any later timestamp
+  while (j > 0 && events[j - 1].timestamp > events[j].timestamp) {
+    Event temp = events[j];
+    events[j] = events[j - 1];
+    events[j - 1] = temp;
+    j--;
+  }
+
+  Serial.print("Event logged: t=");
+  Serial.print(newEvent.timestamp);
+  Serial.print(" ms, intensity=");
+  Serial.println(newEvent.intensity);
+}
+
+void print_log() {
+  Serial.println("--- Event log ---");
+  if (event_count == 0) {
+    Serial.println("No events yet.");
+  }
+  for (int i = 0; i < event_count; i++) {
+    Serial.print(i + 1);
+    Serial.print(": t=");
+    Serial.print(events[i].timestamp);
+    Serial.print(" ms, intensity=");
+    Serial.println(events[i].intensity);
+  }
+  Serial.println("-----------------");
+}
+
+void check_motion() {
+  int motionNow = digitalRead(pirPin);
+
+  // Log only on the transition no-motion -> motion
+  if (motionNow == HIGH && lastMotionState == LOW) {
+    int reading = analogRead(potPin);
+    log_event(reading);
+  }
+  lastMotionState = motionNow;
+}
+
+void check_button() {
+  int reading = digitalRead(buttonPin);
+
+  if (reading != lastButtonReading) {
+    debounceStart = millis();
+  }
+
+  if (millis() - debounceStart > DEBOUNCE_DELAY) {
+    if (reading != buttonState) {
+      buttonState = reading;
+      if (buttonState == LOW) {   // fresh press
+        print_log();
+      }
+    }
+  }
+  lastButtonReading = reading;
+}
+
+void update_alert() {
+  int limit = get_threshold("bench");
+
+  if (limit == -1) {              // check the sentinel before trusting it
+    digitalWrite(ledPin, LOW);
+    return;
+  }
+
+  // Log is sorted by timestamp, so the newest event is the last one
+  if (event_count > 0 && events[event_count - 1].intensity > limit) {
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+}
+
+void loop() {
+  check_motion();
+  check_button();
+  update_alert();
+}
+```
 >
-> Wokwi Link : https://wokwi.com/projects/473961269590110209
+> Wokwi Link : https://wokwi.com/projects/479189746717490177
 
 ### Questions
 
 - Why does `log_event()` need to hold the newly-built `Event` record in a temporary variable before the insertion loop, rather than writing straight into `events[event_count]` and shifting other records around it?
   ```
-
-
+  The new record is built once in newEvent with millis() and the reading, then placed at the end and swapped left. During the swaps the record moves through the array, so its position changes on every step. Keeping a copy in newEvent means I still have the original values to print at the end. When two records are swapped, the temp variable holds one of them so neither is overwritten and lost.
   ```
 
 - What would happen to the logged data if the PIR reading were used directly (`if (motionDetected)`) instead of edge-detected against `lastMotionState`?
   ```
-
-
+  The PIR stays HIGH for several seconds while motion continues, and loop() runs thousands of times in that period. Without comparing against lastMotionState, a new event would be logged on every pass. The 10-slot log would fill up in a fraction of a second with copies of the same movement, and every later event would be rejected. Edge detection logs only the change from LOW to HIGH, so one movement gives one record.
   ```
 
 - Why does `get_threshold()` need to return a sentinel value like `-1` for an unrecognised zone name, rather than just returning `0`?
   ```
-
+  0 could look like a real limit. If an unknown zone returned 0, any intensity above 0 would exceed it and the alert LED would turn on for almost every event, with no sign that the lookup had failed. The pot can never read below 0, so -1 can never be a real limit. update_alert() checks for -1 first and keeps the LED off instead of trusting a wrong value.
 
   ```
 
 - Why does `log_event()` need to check `event_count` against `MAX_EVENTS` before writing, rather than trusting the array is always big enough?
   ```
-
-
+  The array has exactly 10 slots, indices 0 to 9. On the 11th event, events[event_count] would be events[10], outside the array. C++ does not stop this: it would overwrite whatever variable sits next in memory, such as event_count or the thresholds table, and the program could behave randomly or crash. The check stops at 10 and prints “Log full” instead.
   ```
 
 - In `print_log()`, why does the loop condition need to be `i < event_count` rather than `i < MAX_EVENTS`?
   ```
-
-
+  event_count is how many records have actually been stored. The slots after that have never been filled, so they contain zeros or leftover values. With i < MAX_EVENTS the log would always print 10 lines, including empty or fake events. With i < event_count only real events are printed, as in my Serial output where 5 events give 5 lines.
   ```
 
 - Why can't `delay()`-based code (from Week 4) be used anywhere in this program's `loop()`?
   ```
-
-
+  The PIR and the button must be read on every pass. delay() stops the whole program, so a short movement or a button press that happens during the pause would be missed completely. It would also break the debounce timing, which depends on loop() running fast. With no delay(), check_motion(), check_button() and update_alert() run continuously and nothing is lost.
   ```
 
 ### Spot-the-Bug Worksheet
@@ -98,7 +252,7 @@ flowchart LR
 struct Event {
   unsigned long timestamp;
   int intensity;
-}
+} // Here is missing the semicolon ;
 
 Event events[MAX_EVENTS];
 ```
@@ -117,6 +271,7 @@ int get_threshold(String zone) {
       return thresholds[i].limit;
     }
   }
+  // here is missing the sentinel return -1;
 }
 ```
 <details><summary>Answer</summary>There's no <code>return</code> after the loop for the case where no zone matches — the function falls off the end without a defined sentinel value, so callers have nothing reliable to check for "zone not found." It needs a <code>return -1;</code> (or similar sentinel) after the loop.</details>
@@ -126,8 +281,8 @@ int get_threshold(String zone) {
 void loop() {
   bool motionDetected = digitalRead(pirPin) == HIGH;
 
-  if (motionDetected) {
-    log_event();
+  if (motionDetected) {   // missing edge detection: no check against lastMotionState,
+    log_event();          // so an event is logged on every pass while motion stays HIGH
   }
 }
 ```
@@ -136,7 +291,8 @@ void loop() {
 **Round 4:**
 ```cpp
 void log_event(unsigned long t, int intensity) {
-  events[event_count] = {t, intensity};
+  // missing guard: if (event_count >= MAX_EVENTS) return;
+  events[event_count] = {t, intensity};   // writes past the end once the array is full
   event_count++;
 
   int i = event_count - 1;
@@ -158,7 +314,7 @@ struct Event {
 Event a = {1000, 512};
 Event b = {1000, 512};
 
-if (a == b) {
+if (a == b) {   // structs can't be compared with ==: compare each field (a.timestamp == b.timestamp && a.intensity == b.intensity)
   Serial.println("Duplicate event");
 }
 ```
@@ -167,7 +323,7 @@ if (a == b) {
 **Round 6:**
 ```cpp
 int get_threshold(String zone) {
-  for (int i = 0; i <= NUM_ZONES; i++) {
+  for (int i = 0; i <= NUM_ZONES; i++) {   // must be i < NUM_ZONES: <= reads one slot past the end
     if (thresholds[i].zone == zone) return thresholds[i].limit;
   }
   return -1;
@@ -181,7 +337,7 @@ void print_log() {
   for (int i = 0; i < event_count; i++) {
     Serial.print(events[i].timestamp);
     Serial.print(" ");
-    Serial.println(events[i].limit);
+    Serial.println(events[i].limit);   // Event has no limit field: should be events[i].intensity
   }
 }
 ```

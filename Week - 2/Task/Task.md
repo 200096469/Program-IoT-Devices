@@ -69,19 +69,30 @@ Wokwi link: https://wokwi.com/projects/477634517574884353
 ### Guided Questions
 - Why does the LED behave the same whether the blink logic is in `loop()` directly or inside a function?
   ```
-  A function serves to group instructions under a single name. When `loop()` calls `blinkLed()`, the same `digitalWrite` and `delay` instructions are executed in the same order; consequently, the LED performs exactly the same action. The difference is purely organizational: the code becomes more readable and can be reused anywhere without needing to be copied—just simply call the function.
+  A function serves to group instructions under a single name. When `loop()` calls
+  `blinkLed()`, the same `digitalWrite` and `delay` instructions are executed in the same
+  order; consequently, the LED performs exactly the same action. The difference is purely
+  organizational: the code becomes more readable and can be reused anywhere without
+  needing to be copied—just simply call the function.
   ```
 - What does `pinMode` do, and why do we only call it once, in `setup()`?
   ```
-  pinMode tells the board whether a pin is an input or an output. The pin keeps that setting until the board restarts, so setting it once in setup() is enough. Calling it in loop() would repeat the same work thousands of times for no reason.
+  pinMode tells the board whether a pin is an input or an output. The pin keeps that
+  setting until the board restarts, so setting it once in setup() is enough. Calling it in
+  loop() would repeat the same work thousands of times for no reason.
   ```
 - Why does a function need parameters if you want it to blink at different speeds?
   ```
-  Without parameters, the on and off times would be fixed within the function, requiring a separate function for each speed. By using `onMs` and `offMs` as parameters, a single function allows for blinking at any speed: `blinkLed(200, 200)` is fast, while `blinkLed(800, 800)` is slow.
+  Without parameters, the on and off times would be fixed within the function, requiring a
+  separate function for each speed. By using `onMs` and `offMs` as parameters, a single
+  function allows for blinking at any speed: `blinkLed(200, 200)` is fast, while
+  `blinkLed(800, 800)` is slow.
   ```
 - Why does a function need a return type other than `void` if you want it to report back the LED's new state?
   ```
-  A void function cannot give a value back to the code that called it. setLed() returns a bool, so loop() can store the new state in a variable and print it. With void I would have to read a global variable instead, which is less clear and easier to get wrong.
+  A void function cannot give a value back to the code that called it. setLed() returns a
+  bool, so loop() can store the new state in a variable and print it. With void I would
+  have to read a global variable instead, which is less clear and easier to get wrong.
   ```
 
 ### Spot-the-Bug Worksheet
