@@ -16,12 +16,13 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 
 > **Schematic:**
 >
-![alt text](image.png)
-> _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (![alt text](image-1.png)) and add your share link ([Export → Share link](https://circuit-studio.pages.dev/#p=zjZRdb9owGEb_Cnqvkyq2Qxp8t5WpqjZRtLFN6lRVTmKoIbGD4xCg4r9PprB8DKJegu1z7MeP8wZzpTNmgIJQxo2Fjkth3MKUiVDgwIbrQigJFDkgWcaBwowVq4E7mHBTKb0ScjFgMhmMmWERK_jgTknJY2MXORBrzgxPgAL2cOAiz8W3M4ypH1KCbkIyegIHyjzpTgpnHqb-iJLRzQgROylSTCcPdhIvcoLdgri5iO0WY5XlSnJpCqB_3kDYOT8ROGB2ud3vcSU4sAXqjjwHdkADzwGtDFDPgZRFPAUKP8hg-nD3CA7kWuUF0LfDdevBOYniF72eL3ZE1L5cGS6NUBk3XL97if_uJeFZPGqYp48z1NCCes0KoMjzPO_gwDwVOdA5SwvesO7ZuuRyW1tTfj7jkLzL_OFZhsKG7duXccsWq1RpoKB5Ald1qqoIUqoRarnfn0_nEnQ63r9c8W3D-PmpJVwJaaEsNmLDryvZMM91nNXKTRyTDTkFOjwZ0YWbJL8Ial_jZUO5nOMtCmvDQiZtfB1hA38_GX8In_JQ-Wh9Ae9i3BvY_WSMP2LQWHjFsrxkCLzuCUZtAfmIICdCq33jDjQvRGFU9-L94GLVvl-q9bBb6mcHKqF54_VWL7uYs3I5BAfYsaOdl5YDBWSrE9WjdV_s6NSOnvdRP9fqhewDmaasj0w65LonveRbnGdxELfJ9cOxaycdcl2RXvJijbOdj9vk-gtg137tkOtq9JIDXeHNpupL43eLfPyw2r_vpw-P6GrI0W4VVdu-KKbXsSS8xi2MzDLpt7l1Sf-vRZs7usbdVXL46gV9XNwJuB3_pzb52YG4LIzK7lTCgcoyTe2wXNjvnk5KIW0MqYg00-LY_GcHoiM9Z9qc3uSyzHKujz8Oh78)) below it.]_
+> ![Task schematic](image-1.png)
+>
+> _Note: Circuit Studio only offers an "Active" buzzer symbol, but the real circuit uses a **passive** buzzer driven by `tone()`/`noTone()`. The tool also auto-calculates the LED resistor as 150 Ω; the real circuit uses the **220 Ω** resistor from the components list._
 >
 > <details><summary>Schematic link</summary>
 >
-> [Open the example schematic in Circuit Studio]()
+> [Open my schematic in Circuit Studio](https://circuit-studio.pages.dev/#p=zjZRdb9owGEb_Cnqvkyq2Qxp8t5WpqjZRtLFN6lRVTmKoIbGD4xCg4r9PprB8DKJegu1z7MeP8wZzpTNmgIJQxo2Fjkth3MKUiVDgwIbrQigJFDkgWcaBwowVq4E7mHBTKb0ScjFgMhmMmWERK_jgTknJY2MXORBrzgxPgAL2cOAiz8W3M4ypH1KCbkIyegIHyjzpTgpnHqb-iJLRzQgROylSTCcPdhIvcoLdgri5iO0WY5XlSnJpCqB_3kDYOT8ROGB2ud3vcSU4sAXqjjwHdkADzwGtDFDPgZRFPAUKP8hg-nD3CA7kWuUF0LfDdevBOYniF72eL3ZE1L5cGS6NUBk3XL97if_uJeFZPGqYp48z1NCCes0KoMjzPO_gwDwVOdA5SwvesO7ZuuRyW1tTfj7jkLzL_OFZhsKG7duXccsWq1RpoKB5Ald1qqoIUqoRarnfn0_nEnQ63r9c8W3D-PmpJVwJaaEsNmLDryvZMM91nNXKTRyTDTkFOjwZ0YWbJL8Ial_jZUO5nOMtCmvDQiZtfB1hA38_GX8In_JQ-Wh9Ae9i3BvY_WSMP2LQWHjFsrxkCLzuCUZtAfmIICdCq33jDjQvRGFU9-L94GLVvl-q9bBb6mcHKqF54_VWL7uYs3I5BAfYsaOdl5YDBWSrE9WjdV_s6NSOnvdRP9fqhewDmaasj0w65LonveRbnGdxELfJ9cOxaycdcl2RXvJijbOdj9vk-gtg137tkOtq9JIDXeHNpupL43eLfPyw2r_vpw-P6GrI0W4VVdu-KKbXsSS8xi2MzDLpt7l1Sf-vRZs7usbdVXL46gV9XNwJuB3_pzb52YG4LIzK7lTCgcoyTe2wXNjvnk5KIW0MqYg00-LY_GcHoiM9Z9qc3uSyzHKujz8Oh78)
 >
 > </details>
 >
@@ -32,6 +33,8 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 > | Potentiometer wiper (outer legs → 3.3V and GND) | Analog input, **ADC1 only** | GPIO _01_ |
 > | Alert LED (through the 220 Ω resistor; LED cathode → GND) | Digital output | GPIO _39_ |
 > | Passive buzzer + (buzzer − → GND) | Digital output (`tone()`) | GPIO _38_ |
+>
+> _Board: **Waveshare ESP32-S3-Pico**. On the ESP32-S3, ADC1 is GPIO 1-10 (so GPIO 1 works with Wi-Fi on), GPIO 38 and 39 are normal input/output pins, and Serial uses USB (GPIO 19/20), not GPIO 1/3. These choices follow the same pin rules for this chip._
 
 **How to draw the schematic:** before building the circuit, draw it in [Circuit Studio](https://circuit-studio.pages.dev/).
 - Include every component in the list above: the ESP32-PICO, the potentiometer, the alert LED with its 220 Ω resistor, and the passive buzzer.
