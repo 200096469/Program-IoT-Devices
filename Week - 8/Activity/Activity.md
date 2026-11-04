@@ -56,11 +56,13 @@ Before any sensor data can be sent anywhere, the device needs to reliably connec
 
 > **Schematic:**
 >
-> _[Schematic image placeholder: draw this circuit in [Circuit Studio](https://circuit-studio.pages.dev/), then paste your exported schematic image here (Export → Schematic image) and add your share link (Export → Share link) below it.]_
+> ![Task 1 schematic](image.png)
 >
-> <details><summary>![alt text](image.png)</summary>
+> _Note: Circuit Studio auto-calculates the LED resistor as 150 Ω; the real circuit uses the **220 Ω** resistor from the components list. Board: **Waveshare ESP32-S3-Pico**._
 >
-> [Open the example schematic in Circuit Studio](https://circuit-studio.pages.dev/#p=zdZDBSsQwFEV_pdyVQjok7TijbyfjwlkpTN0os0jbKJG2CS-JOpT-u2TQjeDywbn3XN6MV8ejjiBYF8vOcpdsLENMvXUQ-DAcrJtASmDSowGhMaM3rGNiU9wOhmNxOIVoxuLi7r5R6hICHRsdTQ9CJatNqWSp1o2sSCqqtqtrtXmGQPL9H6jaNlKSvKH11apSdYZap7nfZ8gEX1dlqEtvu7ysc6N3k5liAL3MsJl5UhCIJ59nnpMQ-AJtt1LgBCqVkgLsIkgKDLo1AwiHunjc7x4g4Nn5AJqX_73LUeDTssnSo0CXQnTjzvUGNKVhyK3TGwia-2SnvHOwLWu2v4m2Bc3wmuOP6T3ld56PZfkG)
+> <details><summary>Schematic link</summary>
+>
+> [Open my schematic in Circuit Studio](https://circuit-studio.pages.dev/#p=zfZJRb9owFIX_SnSenSpOUlT8ttGuQqtatG6qtAkhJzFgltiZ7TS0iP8-OQOFoLJH-16f755zvcNSm4o7MEjtwlyavJEutK4ppAbBqzBWagVGCRSvBBgetQo_lzr_LdUqeJHhFxlMtFIid1Kr4EW6dcCDZ8ddY4OHu1sQ5EZwJwowxFE8CikNo_R7NGbxmKXRVZLSnyBo6uLDpoSyKL6iNPVNmeammPomYeskDm0S1jL3g-a6qrUSylmwXztI3_ODgsC91X7q7iUItmA0igjewEYRgdEOLCIoeSZKMDwnwWw6eQJBbXRtwXb7y9Q9OYDyxXib83cqel4pDrQwSf_haHrk0ZsT4sPdLT3BIdelNmAwosCeYFnKGmzJSytOcNno3eat7nErdcSl9Bw3PqHdPw5oFwGrt-R6o00PMMJK67obT6HxgXL9oalvA0t6Xdmu9Qw3J2ilEScbaxf1dnzTrlcg4F0aZ-nWYPjqc8n6ah-Gr8589ThHv6J20Y7oa1FVQ-Xep39LB8rd9_HX97PpE00v6W7kukj-iP_pxmcTD_18GirPCfLGOl1NdCHAVFOWvqxWYOCmaKTyVkuZGW5kF96cIOvUa27cYa2bpqqF6Q77_V8)
 >
 > </details>
 >
@@ -71,6 +73,47 @@ Before any sensor data can be sent anywhere, the device needs to reliably connec
 > | LED (through the 220 Ω resistor; LED cathode → GND) | Digital output | GPIO _14_ |
 
 Write `connectWiFi()` using `SSID`/`PASSWORD` constants set to **your own 2.4 GHz Wi-Fi network** (a phone hotspot works well; the ESP32 cannot join 5 GHz networks), called once from `setup()` with a bounded blocking retry (`WiFi.status() != WL_CONNECTED`, max 20 attempts, `delay(500)` between attempts; this is acceptable here because it runs once, in `setup()`, exactly like this course's other one-shot initialisation calls). If it connects, print `"Connected! IP: "` followed by `WiFi.localIP()`; if it runs out of attempts, print `"Connection failed - continuing offline."`. In `loop()`, check `WiFi.status()` on every pass and drive the status LED `HIGH` when connected, `LOW` when not. `loop()` itself must contain no `delay()` at all.
+
+```cpp
+#include <WiFi.h>
+
+const char* SSID     = "CyFi";               // your 2.4 GHz network name (case-sensitive)
+const char* PASSWORD = "YOUR_WIFI_PASSWORD";
+const int STATUS_LED = 14;                   // Wi-Fi status LED (through a 220 ohm resistor to GND)
+
+// Joins the Wi-Fi network as a station, trying for up to 10 seconds (20 x 500 ms). Called once from setup().
+bool connectWiFi() {
+  Serial.print("Connecting to WiFi");
+  WiFi.begin(SSID, PASSWORD);
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
+    return true;
+  }
+  Serial.println("\nConnection failed - continuing offline.");
+  return false;
+}
+
+// Runs once at start-up: starts Serial, sets the status LED pin as an output, then joins Wi-Fi before loop() begins.
+void setup() {
+  Serial.begin(115200);
+  pinMode(STATUS_LED, OUTPUT);
+  connectWiFi();
+}
+
+// Runs over and over forever: checks the Wi-Fi status on every pass and mirrors it on the status LED (no delay()).
+void loop() {
+  bool connected = (WiFi.status() == WL_CONNECTED);
+  digitalWrite(STATUS_LED, connected ? HIGH : LOW);
+}
+```
 
 >
 > Evidence: _(attach a photo or short video of your working circuit on the ESP32-PICO, plus a screenshot of the Serial Monitor output)_
