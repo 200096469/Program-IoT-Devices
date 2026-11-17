@@ -404,30 +404,25 @@ Answer these in your own words before moving on:
 
 1. List the three jobs the ESP32-PICO does when it runs as an access point. Why can't a phone joined to it reach the internet, and what does the phone usually do about that?
    ```
-
-
+   In access point mode the ESP32 creates a Wi-Fi network, gives joined stations an IP address and provides local web or DNS services. It is not acting as an internet gateway unless additional routing is configured, so the phone cannot reach outside hosts through the ESP32 and usually warns that the network has no internet; the phone may ask whether to stay connected.
    ```
 
 2. A classmate sets their access point password to `"lab"` and says "the code runs fine, but my network doesn't show up". Explain what happened, and the two changes that would have made the problem obvious or avoided it.
    ```
-
-
+   The four-character password is invalid for WPA2, so `WiFi.softAP()` should fail and not create the network. The sketch should check and handle the `softAP()` boolean return value, printing an error when it is `false`, and the password should be replaced with at least 8 characters or `""` only if an intentionally open network is acceptable.
    ```
 
 3. Why must every value from `server.arg()` be validated, even on a network only you know the password to? Give an example of what could go wrong in the irrigation controller without validation.
    ```
-
-
+   Values from a browser or HTTP client are untrusted and can be missing, negative, non-numeric or deliberately extreme even though the network password is known. In an irrigation controller, an unvalidated `seconds` value could become a huge negative or positive duration, pump for too long or never stop, and could also overflow a variable or damage the hardware.
    ```
 
 4. Compare a page that reloads itself every 5 seconds with a page that fetches `/api/status` every second. Give two advantages of the `fetch()` design, and explain why the pump controls use POST instead of GET.
    ```
-
-
+   `fetch()` updates only the page's data without replacing the whole document, and it can display an immediate error if the request fails instead of waiting for a full reload. POST is used for pump actions because they change device state; it avoids accidental operation from browser refreshes, prefetches or links and makes the action more deliberate.
    ```
 
 5. Explain, step by step, how a captive portal makes the setup page open by itself when a phone joins. Why is `Preferences` needed for a setup page to be useful, and why must settings only be saved when the user presses Save?
    ```
-
-
+   After joining, a phone requests a common connectivity-check URL. The DNS server sends every name to `WiFi.softAPIP()`, and unknown web paths are redirected to `/`, causing the setup page to open or appear as a captive-portal prompt. `Preferences` stores settings in non-volatile flash so they survive a reset or power loss. Settings should only be written by the Save handler: saving on every loop pass wastes flash write cycles and may erase or repeatedly rewrite valid values.
    ```

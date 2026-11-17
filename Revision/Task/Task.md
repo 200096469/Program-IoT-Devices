@@ -71,38 +71,32 @@ flowchart LR
 
 - Why does `log_collection()` need to hold the newly-built `Collection` record in a temporary variable before the insertion loop, rather than writing straight into `collections[collection_count]` and shifting other records around it?
   ```
-
-
+  The temporary variable preserves the complete new record while insertion sorting shifts existing struct records to the right. Writing directly to the end first could overwrite or lose values as earlier records move, especially if the shift loop and timestamp comparison use the same array slot.
   ```
 
 - What would happen to the alert logic if `get_capacity()`'s sentinel return value were used directly in the fill-level comparison without first checking whether it was `-1`?
   ```
-
-
+  The sentinel could make a normal fill level look unsafe or trigger no alert unexpectedly, depending on the operator used. The caller must check `capacity >= 0` before comparing `fillLevel > capacity`, as `-1` means "zone not found", not a real capacity.
   ```
 
 - Why does the PIR-triggered "unregistered dumping" alert need the `collectionJustLogged` flag, rather than just checking `if (motionDetected)` on its own?
   ```
-
-
+  A held PIR HIGH may remain true for many passes, so it would trigger repeatedly rather than for only the dumping event. `collectionJustLogged` distinguishes whether a recent edge completed a collection in the current motion window, preventing false unregistered-dump alerts and allowing the event logic to reset when appropriate.
   ```
 
 - The Collect button uses settle-time debouncing before a press is trusted. What would go wrong with the collection log if that debounce were removed?
   ```
-
-
+  Mechanical contact bounce could make one physical press look like several rising-edge events. The program could insert duplicate collections or reset debounce timing unpredictably, making the log and later sorting/statistics inaccurate.
   ```
 
 - Why does `log_collection()` need to check `collection_count` against `MAX_COLLECTIONS` before writing, rather than trusting the array is always big enough?
   ```
-
-
+  The array has indices only from `0` to `MAX_COLLECTIONS - 1`. When the count reaches the maximum, an unguarded write at `collections[collection_count]` is out of bounds and can corrupt other memory or variables. The bounds check permits the required drop-oldest behavior or rejects a new write safely.
   ```
 
 - Identify every place in this program where `millis()`-based timing is used instead of `delay()`, and explain what would break in each case if `delay()` were used instead.
   ```
-
-
+  `millis()` is used for PIR and button scanning, alert lifetimes, report or display heartbeats, collection action timing and any timed buzzer or LED phases. A blocking `delay()` in one of these places would prevent other reads and timers from running, miss button edges or PIR transitions, freeze the Serial or OLED update, and prevent independent alerts from being updated until the delay finishes.
   ```
 
 ### Spot-the-Bug Worksheet

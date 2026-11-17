@@ -653,32 +653,27 @@ Answer these in your own words before moving on:
 
 1. When you read a new requirement you haven't seen phrased before, how do you decide which concept it's asking for? Give a concrete example of a phrase that would tip you off.
    ```
-
-
+   Identify the required data, state change and timing words, then match them to familiar patterns. Phrases such as "once per confirmed press", "first time the state changes", "oldest record when full", "one loop pass" and "not every pass of `loop()`" tip toward debouncing, edge detection, insertion or arrays, bounds guards and `millis()` timers respectively.
    ```
 
 2. Why does combining several inputs and outputs in one program make `delay()` a bug, when the exact same `delay()` was harmless in an earlier, single-component sketch?
    ```
-
-
+   In a simple one-component sketch, no other behavior may need to run during the pause. In a combined system, `delay()` prevents `loop()` from reading every sensor and button, updating timed outputs, handling reports or checking alarms for the whole delay period. Work that must remain independent must therefore use `millis()` timers and separate state variables.
    ```
 
 3. What do a missing debounce check, a missing array-bounds guard, and an unchecked sentinel value have in common as a class of bug?
    ```
-
-
+   They are all failures to validate assumptions before acting on data or hardware state. All can make the program use an invalid reading or invalid index, and all can cause behavior that may appear random because the hardware or array contents are not guaranteed to be safe at that point.
    ```
 
 4. Why does an array of structs remove an entire bug class that two parallel arrays are prone to?
    ```
-
-
+   A struct keeps related fields together in one record. Two parallel arrays are linked only by a shared index, so inserting or sorting one array separately can leave timestamps, values and names mismatched. Copying or shifting whole struct variables moves every field together, and code using `record.field` still clearly identifies which record belongs to the reading.
    ```
 
 5. In Task 10, why must `compute_stats()` be called again after every new check-in, rather than once in `setup()`?
    ```
-
-
+   The check-in count and battery levels change throughout the program. `setup()` can compute statistics only for the empty initial list, so the stored min, max and average become stale after each new record. Running `compute_stats()` after a successful insertion recalculates them from the current list.
    ```
 
 6. Which concept do you feel least confident about, and what would you build to practice it specifically?

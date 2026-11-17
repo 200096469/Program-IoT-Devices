@@ -378,30 +378,25 @@ Answer these in your own words before moving on:
 
 1. Describe the four stages a station goes through to join a router. If `WiFi.status()` returns `WL_NO_SSID_AVAIL`, which stage failed, and what three things would you check?
    ```
-
-
+   A station scans for networks, authenticates with the access point, associates with it, then obtains an IP address with DHCP. `WL_NO_SSID_AVAIL` means the scan did not find the requested SSID, so check that the SSID is exactly correct and case-sensitive, that the router has 2.4 GHz enabled and reachable at the ESP32, and that the device is close enough with a working antenna/power supply.
    ```
 
 2. An ESP32-PICO shows `WL_CONNECTED` but every Supabase send fails. Give two possible causes, and explain why `WL_CONNECTED` doesn't prove the device can reach the internet.
    ```
-
-
+   The router may have no internet connection or the ESP32 may have an incorrect Supabase URL, publishable key or REST endpoint. `WL_CONNECTED` proves only that the station is associated with the router and has a local IP address; it does not prove that DNS, HTTPS, routing or the Supabase service is reachable.
    ```
 
 3. One device reads `-48 dBm` and another reads `-78 dBm`. Which has the stronger signal, roughly how many times stronger is it, and what would you expect from each connection?
    ```
-
-
+   `-48 dBm` is much stronger. Because RSSI in dBm is logarithmic, `30 dB` represents roughly a thousandfold difference in power, although that does not translate directly into application throughput. The `-48 dBm` device should have a reliable, fast connection, while `-78 dBm` is weaker and may disconnect, retry, or lose packets.
    ```
 
 4. When would you give an IoT device a static IP, and when is DHCP fine? Why is a DHCP reservation on the router often a better choice than `WiFi.config()` in the sketch?
    ```
-
-
+   Static addressing is useful when another system must contact the device consistently, such as a control desk targeting a locker by IP address. DHCP is usually fine for cloud-send-only devices that initiate outgoing connections. A DHCP reservation keeps the correct address at the router while letting devices and network settings remain normal, so it avoids sketch-specific address conflicts and is easier to change centrally.
    ```
 
 5. Compare polling `WiFi.status()` in `loop()` with using `WiFi.onEvent()`. What can events tell you that polling can't, and why must an event function only set flags instead of printing, waiting or reconnecting?
    ```
-
-
+   Polling checks the present state, while `WiFi.onEvent()` reports transitions and details such as an access-loss reason or Wi-Fi-disconnected event at the moment they occur. Event callbacks should only copy small values and set flags because they run asynchronously and must return quickly; printing, `delay()`, HTTP work or `WiFi.begin()` inside the callback can block or interfere with normal network handling. `loop()` processes the flags afterward.
    ```

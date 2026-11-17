@@ -93,38 +93,32 @@ An apartment complex's rooftop water tank needs remote monitoring from the build
 
 - Why must the low-level alert be timed independently of the 15-second cloud-send interval, rather than only checked at the same time a cloud send happens?
   ```
-
-
+  The tank level can drop below the threshold at any moment, while cloud sends happen only every 15 seconds. Independent alert timing allows `loop()` to detect the low level and switch on the LED/buzzer immediately, instead of delaying the warning until the next network operation.
   ```
 
 - The device is required to keep firing the local alert even while Wi-Fi is disconnected. What in your design makes that true, and what would break it if the alert logic were placed inside `sendToSupabase()`'s success path?
   ```
-
-
+  The level reading and alert state are checked directly in `loop()` on a separate `millis()` timer, so they do not depend on network availability. Placing the alert inside `sendToSupabase()` would stop it during a disconnection and could make the local warning depend on a successful HTTP response instead of the actual tank level.
   ```
 
 - Why is `WiFi.status()` checked again immediately before sending, rather than trusting the result of `connectWiFi()` in `setup()`?
   ```
-
-
+  The connection can drop after successful startup, and `connectWiFi()` describes only the state at setup time. The send function must confirm `WL_CONNECTED` at the exact moment it starts the HTTPS request, otherwise it may attempt work through an unavailable network.
   ```
 
 - What would a building manager actually see in the Supabase `tank_levels` table during an extended Wi-Fi outage, and why is the local LED + buzzer alert still necessary even though the cloud database exists?
   ```
-
-
+  They would see the most recently uploaded rows stop changing; no new data would arrive during the outage. Supabase is not being viewed in real time while the building is offline, and staff near the tank still need an immediate local warning if the level becomes dangerously low.
   ```
 
 - Describe, step by step, what happens in your program from the moment Wi-Fi drops to the moment it reconnects. Which functions run, on what schedule, and what does *not* happen while it's down?
   ```
-
-
+  The level read timer continues every 2 seconds, the alert timer continues independently, and `maybe_reconnect()` is checked every reconnect interval. It calls `WiFi.begin()` once and returns instead of waiting. Cloud sends at 15-second intervals are skipped because `WiFi.status()` is not `WL_CONNECTED`, and no NTP or successful Supabase activity occurs until the connection recovers. On reconnection, `loop()` observes `WL_CONNECTED`, resumes cloud sends and the optional state change can print `[RECOVERED]`.
   ```
 
 - Your device runs in Station mode. Why would Access Point mode on its own **not** meet this brief? What would AP + Station mode add for the on-site building staff?
   ```
-
-
+  Access Point-only mode creates a private local network but has no station-side internet route, so it cannot send tank readings to Supabase or obtain NTP time. AP + Station combines both roles: Station mode uploads cloud data and syncs time, while the access point lets staff join the device and view the tank level locally during an internet or building-router outage.
   ```
 
 ### Spot-the-Bug Worksheet

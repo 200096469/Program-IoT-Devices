@@ -76,32 +76,27 @@ A junior football club plays on a council oval with no Wi-Fi and patchy mobile c
 
 - Why is Access Point mode the right choice for this scoreboard, rather than Station mode? What would you need to change if the club later wanted the scores uploaded to a website as well?
   ```
-
-
+  Access Point mode lets the controller create a private network at an oval with no router or internet, so both phones and the control page remain available. AP-only mode cannot upload to the internet; the club would need AP + Station mode, a working 2.4 GHz router or internet connection, and HTTPS/database code for the station side.
   ```
 
 - Your page sets `<input type="number">` limits and only shows valid teams as buttons. Why does the ESP32-PICO still have to check `team` and `pin` itself? Give an example from your testing.
   ```
-
-
+  Browser limits are only interface hints and can be bypassed with `curl`, developer tools or a modified request. The ESP32 must validate every request because it is the security boundary. Testing `/api/goal?team=visitors` or `/api/reset` with no PIN must produce `400`, and a wrong PIN must produce `403`, regardless of the page controls.
   ```
 
 - Why are `/api/goal` and `/api/reset` POST-only? Describe what could happen during a match if adding a goal were a plain GET link.
   ```
-
-
+  GET normally represents a safe, repeatable page lookup, while a goal or reset changes state and should use POST. A plain GET goal link could be repeated by refresh or browser history, prefetched by a browser or extension, or included in a link preview, adding goals unexpectedly. POST-only routes make an explicit control action and prevent accidental scoring.
   ```
 
 - Explain how your code makes sure one team's LED flash isn't cut short by a goal for the other team, and why the horn and flashes must not use `delay()` in a web-server sketch.
   ```
-
-
+  Each LED keeps its own start time and each update checks whether its 300 ms duration has elapsed. Starting the away flash records another time and does not overwrite the home start time, so both can finish independently. `delay()` inside a web handler freezes DNS, client handling and every other timer, making the server unresponsive; separate `millis()` states let the handler respond immediately and `loop()` end the effects later.
   ```
 
 - The club's PIN and access point password are written in the sketch. Describe two weaknesses of the security in this design, and one improvement for each.
   ```
-
-
+  Firmware is readable and flash can be extracted, so both hardcoded credentials can become known to anyone with the device or code. A strong password should at least be unique and the submitted sketch should use `YOUR_AP_PASSWORD`; a more secure PIN scheme could store a salted hash or derive it from server-controlled configuration, and reset actions should use a time-limited authenticated session instead of a fixed constant.
   ```
 
 ### Spot-the-Bug Worksheet

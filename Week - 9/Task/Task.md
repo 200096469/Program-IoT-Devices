@@ -76,32 +76,27 @@ A school library is installing smart lockers that students unlock from an app. E
 
 - The front-desk computer sends commands to each locker by IP address. Explain why a static IP (or a DHCP reservation) is needed here, when the Activity's Supabase loggers worked fine with DHCP.
   ```
-
-
+  Supabase devices initiate connections to a server, so an address chosen by DHCP does not need to be known externally. A front-desk computer, however, needs to address each locker by a stable destination. A DHCP reservation gives the router the same IP whenever the locker joins, while a static IP in the sketch fixes it locally. Both must be outside the router's changing DHCP pool.
   ```
 
 - Your locker shows `WL_CONNECTED` and the green LED is on, but the front-desk computer can't reach it. List two possible causes related to how you configured Station mode.
   ```
-
-
+  The device may have joined the wrong network or VLAN, or its IP address may be in a different subnet from the front-desk computer. It may also use a stale static IP, missing gateway or incorrect subnet mask. In all cases `WL_CONNECTED` only proves a local association, not reachability from another host.
   ```
 
 - Why does the drop counter only increase on an online → offline change, and not on every `ARDUINO_EVENT_WIFI_STA_DISCONNECTED` event? What would the library staff see in the report if you got this wrong?
   ```
-
-
+  A dropped connection can produce repeated or duplicate disconnect events while it is already offline. The counter must treat a one-way state transition as a new drop, for example by comparing `lastOnline` with the current online flag. Without that guard, repeated events would inflate the report and make a short outage look like many separate failures.
   ```
 
 - Look at the reasons in your own drop log. What did each one tell you about the cause, and what would you recommend the library change if real lockers showed mostly reason 200?
   ```
-
-
+  The reasons identify separate connection failures only if they have been decoded and recorded; for example, reason 15 indicates authentication failure, while reasons 201 and 202 indicate loss or timeout of the association. If most real drops are reason 200, which commonly corresponds to a beacon timeout, recommend improving router placement or Wi-Fi coverage, reducing interference or channel congestion, and checking power stability.
   ```
 
 - Why does the weak-signal warning only print when the signal *changes* between weak and OK, instead of every 2 seconds? How did you detect that change in your code?
   ```
-
-
+  Printing every check would spam the Serial Monitor and hide more important events. The code stores the previous weak/OK state and only reports when the newly measured state differs from it, for example with `if (isWeak != lastWeak)`.
   ```
 
 ### Spot-the-Bug Worksheet

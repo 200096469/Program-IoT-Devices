@@ -569,42 +569,39 @@ Answer these in your own words before moving on:
 
 1. Why must `WiFi.status()` be checked before every single HTTP send, even though the device already connected successfully once in `setup()`?
    ```
-
-
+   The connection can drop at any time after `setup()`, including between the timer firing and `http.begin()`. Checking `WL_CONNECTED` immediately before the request prevents an HTTP attempt while the device is offline and keeps the send from hanging or failing unnecessarily.
    ```
 
 2. What's the practical difference between calling `WiFi.begin()` once in `setup()` wrapped in a blocking retry loop, versus calling it from `maybe_reconnect()` with no loop around it at all?
    ```
-
-
+   The setup retry is one start-up task: it can wait up to 10 seconds for an initial connection before continuing. `maybe_reconnect()` runs from `loop()` and must start only one non-blocking connection attempt at a time, leaving enough time for the sensors, OLED and reconnect state to keep running. It relies on later passes to observe whether `WiFi.status()` has become `WL_CONNECTED`.
    ```
 
 3. Supabase doesn't force a minimum gap between inserts. Why do the tasks still send only once every 15 seconds, and what would happen to the `sensor_log` table and the free plan if the device inserted a row on every pass of `loop()`?
    ```
-
-
+   Sensor readings change slowly, and a 15-second interval is frequent enough for useful monitoring while keeping network traffic and database usage bounded. Inserting on every pass could add hundreds or thousands of rows per minute, consume bandwidth and free-plan limits quickly, and increase the risk of HTTPS failures or HTTP-client resource problems.
    ```
 
 4. Explain why `getTimestamp()` returns a near-1970 date if it's called before `configTime()`'s sync has actually completed, even though `configTime()` itself doesn't throw any error.
    ```
-
-
+   `configTime()` starts the NTP configuration but does not guarantee that an answer has arrived before it returns. Until that happens, the ESP32's Unix clock still contains its early boot/reset value, so `localtime()` formats that small time value as a date in the 1970 range. `syncTime()` avoids this by waiting with a bounded loop until `time(nullptr)` is a plausible current timestamp.
    ```
 
 5. In Task 5, `maybe_reconnect()` and the potentiometer's read interval both use `millis()`, but on two entirely separate timer variables. Why would combining them into a single shared timer be a mistake?
    ```
-
-
+   They have different intervals and purposes: the potentiometer is read every 1000 ms, while reconnection is checked every 5000 ms. A shared timer would fire both operations at the same moment and make each block the other's schedule, so one would have to wait or run at the wrong frequency. Separate unsigned-long `previousMillis` values let both timers run independently and remain non-blocking.
    ```
 
 6. Your sketch contains a Supabase key, and the table holds real sensor data. What privacy or security risks does that create, and how do the publishable key, the insert-only row level security policy and keeping the `service_role` key off the device help address them?
    ```
-
-
+   An attacker who extracts the device code could submit data or try to abuse the project if the key and policy are too permissive. The publishable key is intended for public client use, the `sensor_log` row-level security policy allows inserts only and denies reading or changing existing rows, and never placing the `service_role` key on the ESP32 prevents a compromised device from gaining unrestricted database access. Credentials and access rules should still be treated carefully, and real values must not be committed or shared.
    ```
 
 7. Tasks 1-7 run the ESP32 in Station mode and Task 8 runs it in Access Point mode. For each of these devices, say which Wi-Fi mode you'd choose (Station, Access Point, AP + Station or Off) and why: (a) a greenhouse sensor that logs to Supabase and that staff also check on their phones inside the greenhouse; (b) a battery-powered soil sensor that sends one reading every 10 minutes; (c) a toy robot controlled from a phone in a park.
    ```
+   (a) Use AP + Station mode. Station side supplies internet access for Supabase, while the access-point side lets nearby staff open a local status page even if the site's router or internet fails.
 
+   (b) Use Station mode and switch Wi-Fi off between scheduled uploads if the hardware and library support it. The device joins a router, sends the reading, and then reduces radio power use between intervals. It may use Off mode outside each connection/sending cycle.
 
+   (c) Use Access Point mode if the robot creates its own private network for the phone to join without relying on a router. If both the phone and robot also need internet access, AP + Station can support the robot controller and a router connection simultaneously.
    ```
